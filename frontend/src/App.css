@@ -1,4 +1,4 @@
- {
+ * {
   box-sizing: border-box;
 }
 
@@ -305,7 +305,7 @@ button {
   box-shadow: 0 0 0 3px rgba(2, 117, 216, 0.1);
 }
 
-#777d87.search-input > span {
+.search-input > span {
   position: absolute;
   left: 16px;
   top: 50%;
@@ -755,7 +755,6 @@ button {
 
 .year-arrow.open .chevron {
   transform: rotate(-135deg);
-}
 }
 
 .year-row.excluded {
