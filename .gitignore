@@ -1,0 +1,11 @@
+# Local environment credentials
+.env
+.env.local
+.env.*.local
+!.env.example
+node_modules/
+data/
+
+# Operating-system files
+.DS_Store
+
