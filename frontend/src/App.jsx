@@ -2,6 +2,9 @@ import { Fragment, useEffect, useState } from 'react'
 import { Users, Banknote, CalendarDays, Info, Copy, Check } from 'lucide-react'
 import './App.css'
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://192.168.101.18:3001";
+
 const members = [
   'Stephanie Durugbor',
   'Magdalene Obi',
@@ -99,7 +102,7 @@ useEffect(() => {
 
   const memberId = match[1]
 
-  fetch(`http://192.168.101.18:3001/api/members/${memberId}`)
+  fetch(`${API_BASE_URL}/api/members/${memberId}`)
     .then((response) => {
       if (!response.ok) {
         throw new Error("Member not found")
@@ -209,7 +212,7 @@ useEffect(() => {
   let cancelled = false
 
   const timer = setTimeout(() => {
-    fetch(`http://192.168.101.18:3001/api/members?search=${encodeURIComponent(search)}`)
+    fetch(`${API_BASE_URL}/api/members?search=${encodeURIComponent(search)}`)
       .then((response) => response.json())
       .then((data) => {
         if (!cancelled) {
@@ -231,7 +234,7 @@ useEffect(() => {
 }, [search])
 
 useEffect(() => {
-  fetch('http://192.168.101.18:3001/api/payment-accounts')
+  fetch(`${API_BASE_URL}/api/payment-accounts`)
     .then((response) => response.json())
     .then((data) => setPaymentAccounts(data))
     .catch((error) => {
@@ -246,7 +249,7 @@ useEffect(() => {
     return
   }
 
-  fetch(`http://192.168.101.18:3001/api/members/${selectedMember.id}/dues`)
+  fetch(`${API_BASE_URL}/api/members/${selectedMember.id}/dues`)
     .then((response) => response.json())
     .then((data) => {
   setMemberDues(data.dues)
