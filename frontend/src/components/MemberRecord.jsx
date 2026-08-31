@@ -11,6 +11,11 @@ function MemberRecord({
   openYear,
   onOpenYearChange,
   onBack,
+  backLabel = '← Back to Home',
+  eyebrow = 'PERSONAL DUES RECORD',
+  headerAction = null,
+  memberDetails = null,
+  footer = null,
 }) {
   const [copiedAccountId, setCopiedAccountId] = useState(null)
 
@@ -24,13 +29,14 @@ function MemberRecord({
     className="back-button"
     onClick={onBack}
   >
-    ← Back to Home
+    {backLabel}
   </button>
+  {headerAction}
 </div>
 
 <div className="record-header">
  
- <p className="eyebrow">PERSONAL DUES RECORD</p>
+ <p className="eyebrow">{eyebrow}</p>
   <h1>{selectedMember.full_name}</h1>
 </div>
 
@@ -41,6 +47,8 @@ function MemberRecord({
       ₦{Number(outstandingBalance).toLocaleString()}
     </p>
   </div>
+
+  {memberDetails}
 
   <div className="account-details-card">
     <div className="section-heading">
@@ -118,6 +126,7 @@ function MemberRecord({
     onOpenYearChange={onOpenYearChange}
   />
 </section>
+{footer}
 </section>
 </main>
 </div>
