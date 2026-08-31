@@ -64,6 +64,20 @@ module Gvac
       allocations
     end
 
+    # Returns the exact unpaid amount represented by an administrator-selected
+    # inclusive coverage range. Excluded and unresolved periods never count.
+    def coverage_amount(obligations:, start_period:, end_period:)
+      start_date = month(start_period)
+      end_date = month(end_period)
+      raise ArgumentError, 'coverage start must not be after coverage end' if start_date > end_date
+
+      obligations.sum do |due|
+        next 0 if due.excluded || due.unresolved || due.period < start_date || due.period > end_date
+
+        remaining(due)
+      end
+    end
+
     # The sequence begins at the earliest known applicable historical liability,
     # not automatically at the regular dues start. This preserves valid write-off
     # obligations that predate that metadata. Unknown periods prevent claiming a

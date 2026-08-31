@@ -567,13 +567,124 @@ button {
 
 .record-payment-button {
   padding: 8px 12px;
-  border: 1px solid #bfc8d4;
+  border: 1px solid #0275D8;
   border-radius: 8px;
-  background: #eef2f6;
-  color: #6b7280;
+  background: #0275D8;
+  color: #ffffff;
   font-size: 13px;
   font-weight: 600;
-  cursor: not-allowed;
+}
+
+.payment-management-card {
+  margin-top: 32px;
+  padding: 22px;
+  border: 1px solid #dfe4ea;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.payment-management-card .section-heading {
+  position: static;
+}
+
+.payment-management-card h2 {
+  margin: 4px 0 20px;
+  color: #172033;
+  font-size: 20px;
+  letter-spacing: -0.4px;
+}
+
+.payment-amount-field {
+  display: block;
+}
+
+.payment-amount-field > span,
+.coverage-date-fields legend,
+.coverage-date-fields label > span {
+  color: #4b5563;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.payment-amount-field input,
+.coverage-date-fields select {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 7px;
+  padding: 0 11px;
+  border: 1px solid #d9dde3;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #172033;
+}
+
+.coverage-preview {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.coverage-preview-title,
+.coverage-total,
+.payment-preview-status,
+.payment-preview-error {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.coverage-preview-title {
+  color: #172033;
+  font-weight: 700;
+}
+
+.coverage-date-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.coverage-date-fields {
+  display: grid;
+  grid-template-columns: 1fr 0.8fr;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.coverage-date-fields legend {
+  grid-column: 1 / -1;
+  padding: 0;
+}
+
+.coverage-date-fields label > span {
+  display: block;
+}
+
+.coverage-total {
+  margin-top: 14px;
+  color: #172033;
+  font-weight: 700;
+}
+
+.payment-preview-status {
+  margin-top: 16px;
+  color: #3b8d67;
+}
+
+.payment-preview-error {
+  margin-top: 16px;
+  color: #b42318;
+  font-weight: 600;
+}
+
+@media (max-width: 520px) {
+  .coverage-date-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 520px) {

@@ -1,5 +1,7 @@
 const express = require("express");
 const cors = require("cors");
+const { spawn } = require("child_process");
+const path = require("path");
 const pool = require("./db");
 const {
   calculateOutstandingBalance,
@@ -14,6 +16,31 @@ const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
+
+function runPaymentPreview(payload) {
+  return new Promise((resolve, reject) => {
+    const preview = spawn("ruby", [path.join(__dirname, "../lib/payment_preview.rb")]);
+    let output = "";
+    let errorOutput = "";
+
+    preview.stdout.on("data", (chunk) => { output += chunk; });
+    preview.stderr.on("data", (chunk) => { errorOutput += chunk; });
+    preview.on("error", reject);
+    preview.on("close", (code) => {
+      if (code !== 0) {
+        reject(new Error(errorOutput.trim() || "Unable to calculate payment coverage"));
+        return;
+      }
+
+      try {
+        resolve(JSON.parse(output));
+      } catch (error) {
+        reject(error);
+      }
+    });
+    preview.stdin.end(JSON.stringify(payload));
+  });
+}
 
 app.get("/api/members", async (req, res) => {
   try {
@@ -109,6 +136,48 @@ app.get("/api/admin/dashboard", async (req, res) => {
   } catch (error) {
     console.error("Admin dashboard lookup failed:", error);
     res.status(500).json({ error: "Failed to load dashboard" });
+  }
+});
+
+app.post("/api/admin/members/:id/payment-preview", async (req, res) => {
+  try {
+    const amount = Number(req.body.amount_ngn);
+    if (!Number.isInteger(amount) || amount <= 0) {
+      return res.status(422).json({ error: "Enter a whole payment amount greater than zero." });
+    }
+
+    const { id } = req.params;
+    const dues = await loadMemberDuesRows(pool, id);
+    const unresolved = await pool.query(
+      `SELECT period_start FROM unresolved_historical_periods WHERE member_id = $1`,
+      [id]
+    );
+    const coverage = req.body.coverage;
+    if (coverage && (!coverage.start_period || !coverage.end_period)) {
+      return res.status(422).json({ error: "Select both a coverage start and end month." });
+    }
+
+    const preview = await runPaymentPreview({
+      amount_ngn: amount,
+      obligations: [
+        ...dues,
+        ...unresolved.rows.map((row) => ({
+          period_start: row.period_start,
+          period_status: "active",
+          amount_due_ngn: 0,
+          amount_allocated_ngn: 0,
+          unresolved: true,
+        })),
+      ],
+      coverage,
+    });
+
+    res.json(preview);
+  } catch (error) {
+    console.error("Payment coverage preview failed:", error);
+    res.status(422).json({
+      error: "The amount must exactly clear whole outstanding monthly dues.",
+    });
   }
 });
 

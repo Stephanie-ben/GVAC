@@ -59,6 +59,21 @@ class DuesCalculatorTest < Minitest::Test
     assert_raises(ArgumentError) { DuesCalculator.allocate_oldest_first(obligations: [due('2024-01')], payment_amount_ngn: 300) }
   end
 
+  def test_coverage_amount_skips_excluded_and_unresolved_periods
+    obligations = [
+      due('2019-12'),
+      due('2020-01', amount: 0, excluded: true),
+      due('2021-01', unresolved: true),
+      due('2021-02')
+    ]
+
+    assert_equal 1_000, DuesCalculator.coverage_amount(
+      obligations: obligations,
+      start_period: '2019-12',
+      end_period: '2021-02'
+    )
+  end
+
   def test_future_unpaid_dues_are_not_current_outstanding
     assert_equal 0, DuesCalculator.outstanding(obligations: [due('2027-01')], as_of: '2026-08-01')
   end

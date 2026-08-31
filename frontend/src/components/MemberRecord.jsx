@@ -15,6 +15,7 @@ function MemberRecord({
   eyebrow = 'PERSONAL DUES RECORD',
   headerAction = null,
   memberDetails = null,
+  beforeHistory = null,
   footer = null,
 }) {
   const [copiedAccountId, setCopiedAccountId] = useState(null)
@@ -112,6 +113,8 @@ function MemberRecord({
     ))}
   </div>
 </section>
+
+{beforeHistory}
 
 <section className="payment-history">
 

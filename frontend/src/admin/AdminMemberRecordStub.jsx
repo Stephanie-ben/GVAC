@@ -3,6 +3,7 @@ import { API_BASE_URL } from '../api.js'
 import MemberRecord from '../components/MemberRecord.jsx'
 import DuesNotice from '../components/DuesNotice.jsx'
 import RecordSkeleton from '../components/RecordSkeleton.jsx'
+import PaymentCoveragePreview from './PaymentCoveragePreview.jsx'
 
 function AdminMemberRecordStub({ memberId, onNavigate }) {
   const [member, setMember] = useState(null)
@@ -12,6 +13,7 @@ function AdminMemberRecordStub({ memberId, onNavigate }) {
   const [paymentAccounts, setPaymentAccounts] = useState([])
   const [openYear, setOpenYear] = useState(2026)
   const [loading, setLoading] = useState(true)
+  const [paymentManagementOpen, setPaymentManagementOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -69,8 +71,9 @@ function AdminMemberRecordStub({ memberId, onNavigate }) {
       onBack={() => onNavigate('/admin/members')}
       backLabel="← Back to Members"
       eyebrow="ADMIN MEMBER RECORD"
-      headerAction={<button className="record-payment-button" type="button" disabled title="Payment management will be added next">Record payment</button>}
+      headerAction={<button className="record-payment-button" type="button" onClick={() => setPaymentManagementOpen((isOpen) => !isOpen)}>{paymentManagementOpen ? 'Hide payment' : 'Record payment'}</button>}
       memberDetails={<div className="account-details-card"><div className="section-heading"><p className="eyebrow">MEMBER DETAILS</p></div><div className="member-meta"><div className="meta-item"><span>Dues start</span><strong>{duesStartMonth ? new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric' }).format(new Date(duesStartMonth)) : 'Not recorded'}</strong></div><div className="meta-item"><span>Membership status</span><strong>{member.membership_status}</strong></div></div></div>}
+      beforeHistory={paymentManagementOpen ? <PaymentCoveragePreview memberId={memberId} memberDues={memberDues} /> : null}
       footer={<DuesNotice />}
     />
   )
