@@ -1,6 +1,13 @@
 const express = require("express");
 const cors = require("cors");
 const pool = require("./db");
+const {
+  calculateOutstandingBalance,
+  loadMemberDuesRows,
+  toMemberDuesPayload,
+  getDashboardMetrics,
+  getMembersDirectory,
+} = require("./outstanding");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -12,18 +19,33 @@ app.get("/api/members", async (req, res) => {
   try {
     const search = req.query.search || "";
 
-    const result = await pool.query(
-      `
+    if (req.query.page === undefined) {
+      const result = await pool.query(
+        `
       SELECT id, full_name, membership_status
       FROM members
       WHERE full_name ILIKE $1
       ORDER BY full_name
       LIMIT 20
       `,
-      [`%${search}%`]
-    );
+        [`%${search}%`]
+      );
 
-    res.json(result.rows);
+      return res.json(result.rows);
+    }
+
+    const page = Number.parseInt(req.query.page, 10);
+    const pageSize = Number.parseInt(req.query.page_size, 10);
+    const status = req.query.status || "all";
+
+    const directory = await getMembersDirectory(pool, {
+      search,
+      status,
+      page: Number.isFinite(page) ? page : 1,
+      pageSize: Number.isFinite(pageSize) ? pageSize : 20,
+    });
+
+    res.json(directory);
   } catch (error) {
     console.error("Member search failed:", error);
     res.status(500).json({ error: "Failed to search members" });
@@ -80,6 +102,16 @@ app.get("/api/members/:id", async (req, res) => {
   }
 })
 
+app.get("/api/admin/dashboard", async (req, res) => {
+  try {
+    const metrics = await getDashboardMetrics(pool);
+    res.json(metrics);
+  } catch (error) {
+    console.error("Admin dashboard lookup failed:", error);
+    res.status(500).json({ error: "Failed to load dashboard" });
+  }
+});
+
 app.get("/api/members/:id/dues", async (req, res) => {
   try {
     const { id } = req.params;
@@ -91,105 +123,25 @@ const memberResult = await pool.query(
 
 const duesStartMonth = memberResult.rows[0]?.regular_dues_start_month;
 
-    const result = await pool.query(
-      `
-      SELECT 
-  dp.period_start,
-  dp.period_status,
-  md.amount_due_ngn,
-  md.source_status,
-  COALESCE(SUM(da.amount_allocated_ngn), 0) AS amount_allocated_ngn
-FROM member_dues md
-JOIN dues_periods dp
-  ON dp.id = md.dues_period_id
-LEFT JOIN dues_allocations da
-  ON da.member_dues_id = md.id
-WHERE md.member_id = $1
- AND (
-  dp.period_start < '2020-01-01'
-  OR dp.period_start >= '2021-01-01'
-)
-GROUP BY
-  dp.period_start,
-  dp.period_status,
-  md.amount_due_ngn,
-  md.source_status
-ORDER BY dp.period_start
-      `,
-      [id]
+    const resultRows = await loadMemberDuesRows(pool, id);
+    const outstandingBalance = calculateOutstandingBalance(
+      duesStartMonth,
+      resultRows
     );
-
-    const currentDate = new Date();
-const currentYear = currentDate.getFullYear();
-const currentMonth = currentDate.getMonth() + 1;
 
 const startDate = duesStartMonth
   ? new Date(duesStartMonth)
   : null;
 
-  const duesByMonth = new Map(
-  result.rows.map((due) => {
-    const periodDate = new Date(due.period_start);
-    const monthKey = `${periodDate.getFullYear()}-${String(
-      periodDate.getMonth() + 1
-    ).padStart(2, "0")}`;
-
-    return [monthKey, due];
-  })
-);
-
-let outstandingBalance = 0;
-
-if (startDate) {
-  const startYear = startDate.getFullYear();
-  const startMonth = startDate.getMonth() + 1;
-
-  let year = startYear;
-  let month = startMonth;
-
-  while (
-    year < currentYear ||
-    (year === currentYear && month <= currentMonth)
-  ) {
-    // 2020 is excluded completely
-    if (year !== 2020) {
-      const monthKey = `${year}-${String(month).padStart(2, "0")}`;
-      const due = duesByMonth.get(monthKey);
-
-      if (due) {
-        // Historical write-off records are already settled
-        if (due.source_status !== "writeoff_marker") {
-          const unpaidAmount =
-            Number(due.amount_due_ngn) -
-            Number(due.amount_allocated_ngn);
-
-          outstandingBalance += Math.max(unpaidAmount, 0);
-        }
-      } else {
-        // No record exists, but the member was already liable.
-        // Current standard dues are ₦500/month.
-        outstandingBalance += 500;
-      }
-    }
-
-    month += 1;
-
-    if (month > 12) {
-      month = 1;
-      year += 1;
-    }
-  }
-}
-
 const visibleDues = startDate
-  ? result.rows.filter((due) => {
+  ? resultRows.filter((due) => {
       const periodDate = new Date(due.period_start);
       return periodDate >= startDate;
     })
-  : result.rows;
+  : resultRows;
 
 res.json({
-  dues: result.rows,
+  dues: toMemberDuesPayload(resultRows),
   outstanding_balance_ngn: outstandingBalance,
   regular_dues_start_month: duesStartMonth
 });
