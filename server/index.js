@@ -1,10 +1,9 @@
 const express = require("express");
 const cors = require("cors");
-const { spawn } = require("child_process");
-const path = require("path");
 const pool = require("./db");
 const { savePayment } = require("./payment_writes");
 const { saveNewMember } = require("./member_writes");
+const { previewPayment } = require("./payment_preview");
 const {
   calculateOutstandingBalance,
   loadMemberDuesRows,
@@ -21,28 +20,7 @@ app.use(cors());
 app.use(express.json());
 
 function runPaymentPreview(payload) {
-  return new Promise((resolve, reject) => {
-    const preview = spawn("ruby", [path.join(__dirname, "../lib/payment_preview.rb")]);
-    let output = "";
-    let errorOutput = "";
-
-    preview.stdout.on("data", (chunk) => { output += chunk; });
-    preview.stderr.on("data", (chunk) => { errorOutput += chunk; });
-    preview.on("error", reject);
-    preview.on("close", (code) => {
-      if (code !== 0) {
-        reject(new Error(errorOutput.trim() || "Unable to calculate payment coverage"));
-        return;
-      }
-
-      try {
-        resolve(JSON.parse(output));
-      } catch (error) {
-        reject(error);
-      }
-    });
-    preview.stdin.end(JSON.stringify(payload));
-  });
+  return Promise.resolve(previewPayment(payload));
 }
 
 app.get("/api/members", async (req, res) => {

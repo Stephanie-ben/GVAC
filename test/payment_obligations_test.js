@@ -1,28 +1,12 @@
 const assert = require("node:assert/strict");
-const { spawn } = require("node:child_process");
-const path = require("node:path");
 const {
   calendarPeriodStart,
   toPaymentObligations,
 } = require("../server/outstanding");
+const { previewPayment } = require("../server/payment_preview");
 
 function runPaymentPreview(payload) {
-  return new Promise((resolve, reject) => {
-    const preview = spawn("ruby", [path.join(__dirname, "../lib/payment_preview.rb")]);
-    let output = "";
-    let errorOutput = "";
-    preview.stdout.on("data", (chunk) => { output += chunk; });
-    preview.stderr.on("data", (chunk) => { errorOutput += chunk; });
-    preview.on("error", reject);
-    preview.on("close", (code) => {
-      if (code !== 0) {
-        reject(new Error(errorOutput.trim() || output.trim() || "preview failed"));
-        return;
-      }
-      resolve(JSON.parse(output));
-    });
-    preview.stdin.end(JSON.stringify(payload));
-  });
+  return Promise.resolve().then(() => previewPayment(payload));
 }
 
 function due({ period, status, amount = 500, allocated = 0 }) {
