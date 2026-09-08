@@ -63,6 +63,7 @@ function calculateOutstandingBalance(duesStartMonth, duesRows, asOf = new Date()
 
 const DUES_ROWS_SQL = `
       SELECT
+  md.id AS member_dues_id,
   md.member_id,
   dp.period_start,
   dp.period_status,
@@ -86,6 +87,7 @@ async function loadMemberDuesRows(pool, memberId) {
  AND md.member_id = $1
 GROUP BY
   md.member_id,
+  md.id,
   dp.period_start,
   dp.period_status,
   md.amount_due_ngn,
@@ -103,6 +105,7 @@ async function loadAllDuesRows(pool) {
     `${DUES_ROWS_SQL}
 GROUP BY
   md.member_id,
+  md.id,
   dp.period_start,
   dp.period_status,
   md.amount_due_ngn,
@@ -122,6 +125,119 @@ function toMemberDuesPayload(rows) {
     source_status: row.source_status,
     amount_allocated_ngn: row.amount_allocated_ngn,
   }));
+}
+
+function pad2(value) {
+  return String(value).padStart(2, "0");
+}
+
+function calendarPeriodStart(value) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return `${value.getFullYear()}-${pad2(value.getMonth() + 1)}-${pad2(value.getDate())}`;
+  }
+
+  const raw = String(value);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return raw;
+  }
+
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error("Allocation period is invalid");
+  }
+
+  return `${parsed.getFullYear()}-${pad2(parsed.getMonth() + 1)}-${pad2(parsed.getDate())}`;
+}
+
+function isPayablePeriod(row, duesStartMonth) {
+  const period = calendarPeriodStart(row.period_start);
+  if (period.startsWith("2020-")) return false;
+  if (duesStartMonth && period < calendarPeriodStart(duesStartMonth)) return false;
+  if (row.source_status === "writeoff_marker") return false;
+
+  return Number(row.amount_due_ngn) - Number(row.amount_allocated_ngn) > 0;
+}
+
+function toPaymentObligations(
+  duesRows,
+  duesStartMonth = null,
+  paymentAmountNgN = 0
+) {
+  const obligations = duesRows
+    .filter((row) => isPayablePeriod(row, duesStartMonth))
+    .map((row) => ({
+      period_start: calendarPeriodStart(row.period_start),
+      period_status: row.period_status,
+      amount_due_ngn: Number(row.amount_due_ngn),
+      amount_allocated_ngn: Number(row.amount_allocated_ngn),
+      unresolved: false,
+    }));
+
+  if (!Number.isInteger(paymentAmountNgN) || paymentAmountNgN <= 0) {
+    return obligations;
+  }
+
+  let remaining = paymentAmountNgN;
+
+  for (const obligation of obligations) {
+    remaining -=
+      obligation.amount_due_ngn - obligation.amount_allocated_ngn;
+
+    if (remaining <= 0) {
+      return obligations;
+    }
+  }
+
+  const existingPeriods = new Set(
+    obligations.map((obligation) =>
+      calendarPeriodStart(obligation.period_start)
+    )
+  );
+
+  let lastPeriod = obligations.length
+    ? calendarPeriodStart(obligations[obligations.length - 1].period_start)
+    : duesStartMonth
+      ? calendarPeriodStart(duesStartMonth)
+      : null;
+
+  if (!lastPeriod) {
+    return obligations;
+  }
+
+  let year = Number(lastPeriod.slice(0, 4));
+  let month = Number(lastPeriod.slice(5, 7));
+
+  while (remaining > 0) {
+    month += 1;
+
+    if (month > 12) {
+      month = 1;
+      year += 1;
+    }
+
+    if (year === 2020) {
+      continue;
+    }
+
+    const period = `${year}-${String(month).padStart(2, "0")}-01`;
+
+    if (existingPeriods.has(period)) {
+      continue;
+    }
+
+    obligations.push({
+      period_start: period,
+      period_status: "active",
+      amount_due_ngn: 500,
+      amount_allocated_ngn: 0,
+      unresolved: false,
+    });
+
+    existingPeriods.add(period);
+    remaining -= 500;
+  }
+
+  return obligations;
 }
 
 async function listMembersWithOutstanding(pool, { search = "", asOf = new Date() } = {}) {
@@ -222,6 +338,8 @@ module.exports = {
   calculateOutstandingBalance,
   loadMemberDuesRows,
   toMemberDuesPayload,
+  calendarPeriodStart,
+  toPaymentObligations,
   getDashboardMetrics,
   getMembersDirectory,
 };

@@ -29,6 +29,20 @@ function formatOutstanding(amount) {
   return `₦${Number(amount).toLocaleString()}`
 }
 
+function MemberName({ name }) {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean)
+
+  return (
+    <span className="admin-member-name-parts">
+      {parts.map((part, index) => (
+        <span className="admin-member-name-part" key={`${part}-${index}`}>
+          {part}
+        </span>
+      ))}
+    </span>
+  )
+}
+
 function pageNumbers(totalPages) {
   return Array.from({ length: totalPages }, (_, index) => index + 1)
 }
@@ -105,10 +119,8 @@ function AdminMembers({ path, onNavigate }) {
   }
 
   return (
-    <section className="admin-page">
-      <div className="admin-dashboard-header">
-        <h1>Members</h1>
-      </div>
+    <section className="admin-members-section">
+      <h2>Members</h2>
 
       <MemberSearch
         search={search}
@@ -116,8 +128,8 @@ function AdminMembers({ path, onNavigate }) {
         showResults={false}
         inputId="admin-member-search"
         label="Search members"
-        placeholder="Search your name"
-        hint="Search using your first or last name."
+        placeholder="Search members name"
+        hint="Search using members first or last name"
       />
 
       <div className="admin-filters" role="tablist" aria-label="Member filters">
@@ -128,8 +140,8 @@ function AdminMembers({ path, onNavigate }) {
             key={filter.id}
             onClick={() => onNavigate(
               filter.id === 'all'
-                ? '/admin/members'
-                : `/admin/members?status=${filter.id}`
+                ? '/admin'
+                : `/admin?status=${filter.id}`
             )}
           >
             {filter.label}
@@ -168,13 +180,13 @@ function AdminMembers({ path, onNavigate }) {
                   <th>Name</th>
                   <th>Status</th>
                   <th>Outstanding</th>
-                  <th>View Details</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {members.map((member) => (
                   <tr key={member.id}>
-                    <td>{member.full_name}</td>
+                    <td className="admin-member-name"><MemberName name={member.full_name} /></td>
                     <td>
                       <span className={`admin-member-status ${member.financial_status}`}>
                         {statusLabel(member.financial_status)}
@@ -187,7 +199,7 @@ function AdminMembers({ path, onNavigate }) {
                         type="button"
                         onClick={() => openMember(member.id)}
                       >
-                        View Details
+                        View<span className="admin-table-details-rest"> Details</span>
                       </button>
                     </td>
                   </tr>

@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Users, CircleCheck, CircleAlert, Banknote } from 'lucide-react'
 import { API_BASE_URL } from '../api.js'
+import AdminMembers from './AdminMembers.jsx'
+import StatusFeedback from './StatusFeedback.jsx'
 
 const METRIC_CARDS = [
   {
@@ -10,8 +12,6 @@ const METRIC_CARDS = [
     iconClass: 'blue',
     valueKey: 'financially_committed_members',
     format: 'count',
-    viewDetails: true,
-    membersPath: '/admin/members',
   },
   {
     key: 'upToDate',
@@ -20,8 +20,6 @@ const METRIC_CARDS = [
     iconClass: 'green',
     valueKey: 'financially_up_to_date_members',
     format: 'count',
-    viewDetails: true,
-    membersPath: '/admin/members?status=up_to_date',
   },
   {
     key: 'owing',
@@ -30,17 +28,14 @@ const METRIC_CARDS = [
     iconClass: 'red',
     valueKey: 'members_owing',
     format: 'count',
-    viewDetails: true,
-    membersPath: '/admin/members?status=owing',
   },
   {
     key: 'outstanding',
-    label: 'Amount Outstanding',
+    label: 'Outstanding Amount',
     icon: Banknote,
     iconClass: 'green',
     valueKey: 'amount_outstanding_ngn',
     format: 'naira',
-    viewDetails: false,
   },
 ]
 
@@ -54,12 +49,32 @@ function formatMetric(value, format) {
   return amount.toLocaleString()
 }
 
-function AdminDashboard({ onNavigate }) {
+function addedNameFromPath(path) {
+  const query = path.includes('?') ? path.slice(path.indexOf('?') + 1) : ''
+  return new URLSearchParams(query).get('added')
+}
+
+function AdminDashboard({ path, onNavigate }) {
   const [metrics, setMetrics] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [activeCard, setActiveCard] = useState(0)
   const scrollerRef = useRef(null)
+  const addedName = useMemo(() => addedNameFromPath(path), [path])
+  const [addedToast, setAddedToast] = useState(addedName)
+
+  useEffect(() => {
+    setAddedToast(addedName)
+  }, [addedName])
+
+  const dismissAddedToast = () => {
+    setAddedToast(null)
+    const query = path.includes('?') ? path.slice(path.indexOf('?') + 1) : ''
+    const params = new URLSearchParams(query)
+    params.delete('added')
+    const next = params.toString()
+    onNavigate(next ? `/admin?${next}` : '/admin')
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -107,15 +122,36 @@ function AdminDashboard({ onNavigate }) {
     const cardWidth = card.getBoundingClientRect().width
     const styles = window.getComputedStyle(scroller)
     const gap = Number.parseFloat(styles.columnGap || styles.gap) || 12
-    const index = Math.round(scroller.scrollLeft / (cardWidth + gap))
-    setActiveCard(Math.min(Math.max(index, 0), METRIC_CARDS.length - 1))
+    const step = cardWidth + gap
+    const maxScrollLeft = Math.max(0, scroller.scrollWidth - scroller.clientWidth)
+    const lastIndex = METRIC_CARDS.length - 1
+
+    if (step <= 0 || maxScrollLeft <= 0) {
+      setActiveCard(0)
+      return
+    }
+
+    let nearestIndex = 0
+    let nearestDistance = Number.POSITIVE_INFINITY
+
+    for (let index = 0; index <= lastIndex; index += 1) {
+      const position = Math.min(index * step, maxScrollLeft)
+      const distance = Math.abs(scroller.scrollLeft - position)
+
+      if (distance < nearestDistance) {
+        nearestDistance = distance
+        nearestIndex = index
+      }
+    }
+
+    setActiveCard(nearestIndex)
   }
 
   return (
     <section className="admin-page">
       <div className="admin-dashboard-header">
-        <h1>Dashboard</h1>
-        <button className="admin-add-member" type="button">
+        <h1>Overview</h1>
+        <button className="admin-add-member" type="button" onClick={() => onNavigate('/admin/add-member')}>
           Add Member
         </button>
       </div>
@@ -149,15 +185,6 @@ function AdminDashboard({ onNavigate }) {
                   </div>
                   <strong>{formatMetric(metrics[card.valueKey], card.format)}</strong>
                   <span>{card.label}</span>
-                  {card.viewDetails && (
-                    <button
-                      className="admin-view-details"
-                      type="button"
-                      onClick={() => onNavigate(card.membersPath)}
-                    >
-                      View Details
-                    </button>
-                  )}
                 </article>
               )
             })}
@@ -172,6 +199,16 @@ function AdminDashboard({ onNavigate }) {
             ))}
           </div>
         </>
+      )}
+
+      <AdminMembers path={path} onNavigate={onNavigate} />
+
+      {addedToast && (
+        <StatusFeedback
+          type="success"
+          message={`${addedToast} has been added successfully.`}
+          onClose={dismissAddedToast}
+        />
       )}
     </section>
   )

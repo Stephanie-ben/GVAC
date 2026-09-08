@@ -45,8 +45,9 @@ module Gvac
       [due.amount_due_ngn - due.amount_allocated_ngn, 0].max
     end
 
-    # Returns the exact full-obligation allocations for a live payment. It does
-    # not support partial allocations: an amount must clear each selected due.
+    # Returns the exact full-obligation allocations for a live payment. A
+    # payment may clear only some outstanding months, oldest first, but it
+    # cannot leave a month partially paid.
     def allocate_oldest_first(obligations:, payment_amount_ngn:)
       remaining_payment = payment_amount_ngn
       allocations = []
@@ -62,6 +63,21 @@ module Gvac
       raise ArgumentError, 'payment cannot be allocated without a partial payment' unless remaining_payment.zero?
 
       allocations
+    end
+
+    def allocation_coverage(allocations)
+      raise ArgumentError, 'payment produced no allocations' if allocations.empty?
+
+      {
+        start_period: allocations.first[0].period,
+        end_period: allocations.last[0].period,
+        amount_ngn: allocations.sum { |_due, allocated| allocated }
+      }
+    end
+
+    def coverage_matches_allocation?(allocations:, start_period:, end_period:)
+      span = allocation_coverage(allocations)
+      month(start_period) == span[:start_period] && month(end_period) == span[:end_period]
     end
 
     # Returns the exact unpaid amount represented by an administrator-selected

@@ -15,6 +15,7 @@ function MemberRecord({
   eyebrow = 'PERSONAL DUES RECORD',
   headerAction = null,
   memberDetails = null,
+  showAccountDetails = true,
   beforeHistory = null,
   footer = null,
 }) {
@@ -32,13 +33,15 @@ function MemberRecord({
   >
     {backLabel}
   </button>
-  {headerAction}
 </div>
 
 <div className="record-header">
  
  <p className="eyebrow">{eyebrow}</p>
-  <h1>{selectedMember.full_name}</h1>
+  <div className="record-header-row">
+    <h1>{selectedMember.full_name}</h1>
+    {headerAction}
+  </div>
 </div>
 
 <section className="account-summary">
@@ -51,7 +54,7 @@ function MemberRecord({
 
   {memberDetails}
 
-  <div className="account-details-card">
+  {showAccountDetails && <div className="account-details-card">
     <div className="section-heading">
       <p className="eyebrow">ACCOUNT DETAILS</p>
     </div>
@@ -111,7 +114,7 @@ function MemberRecord({
 
       </div>
     ))}
-  </div>
+  </div>}
 </section>
 
 {beforeHistory}

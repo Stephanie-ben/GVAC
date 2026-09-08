@@ -55,8 +55,73 @@ class DuesCalculatorTest < Minitest::Test
     assert_equal 6, DuesCalculator.allocate_oldest_first(obligations: dues, payment_amount_ngn: 3000).length
   end
 
-  def test_no_partial_payment_is_allowed
-    assert_raises(ArgumentError) { DuesCalculator.allocate_oldest_first(obligations: [due('2024-01')], payment_amount_ngn: 300) }
+  def test_partial_balance_payment_clears_whole_oldest_months
+    dues = (1..4).map { |month| due(format('2024-%02d', month)) }
+    allocation = DuesCalculator.allocate_oldest_first(
+      obligations: dues,
+      payment_amount_ngn: 1_000
+    )
+
+    assert_equal(
+      [['2024-01', 500], ['2024-02', 500]],
+      allocation.map { |item| [item[0].period.strftime('%Y-%m'), item[1]] }
+    )
+  end
+
+  def test_partial_month_on_a_normal_due_is_rejected
+    assert_raises(ArgumentError) do
+      DuesCalculator.allocate_oldest_first(obligations: [due('2024-01')], payment_amount_ngn: 300)
+    end
+  end
+
+  def test_amount_need_not_be_a_multiple_of_500
+    dues = [due('2023-12', amount: 300), due('2024-01')]
+    allocation = DuesCalculator.allocate_oldest_first(obligations: dues, payment_amount_ngn: 800)
+
+    assert_equal(
+      [['2023-12', 300], ['2024-01', 500]],
+      allocation.map { |item| [item[0].period.strftime('%Y-%m'), item[1]] }
+    )
+  end
+
+  def test_leftover_that_cannot_clear_the_next_month_is_rejected
+    dues = [due('2023-12', amount: 300), due('2024-01')]
+    assert_raises(ArgumentError) do
+      DuesCalculator.allocate_oldest_first(obligations: dues, payment_amount_ngn: 600)
+    end
+  end
+
+  def test_allocation_coverage_is_the_oldest_first_span
+    dues = (1..4).map { |month| due(format('2024-%02d', month)) }
+    allocation = DuesCalculator.allocate_oldest_first(obligations: dues, payment_amount_ngn: 1_000)
+    coverage = DuesCalculator.allocation_coverage(allocation)
+
+    assert_equal Date.new(2024, 1, 1), coverage[:start_period]
+    assert_equal Date.new(2024, 2, 1), coverage[:end_period]
+    assert_equal 1_000, coverage[:amount_ngn]
+    assert DuesCalculator.coverage_matches_allocation?(
+      allocations: allocation, start_period: '2024-01', end_period: '2024-02'
+    )
+    refute DuesCalculator.coverage_matches_allocation?(
+      allocations: allocation, start_period: '2024-01', end_period: '2024-04'
+    )
+  end
+
+  def test_outstanding_after_a_partial_balance_payment
+    dues = [due('2024-01'), due('2024-02'), due('2024-03')]
+    allocation = DuesCalculator.allocate_oldest_first(obligations: dues, payment_amount_ngn: 1_000)
+    updated = dues.map do |item|
+      added = allocation.find { |allocated_due, _allocated| allocated_due.period == item.period }&.last || 0
+      Obligation.new(
+        period: item.period,
+        amount_due_ngn: item.amount_due_ngn,
+        amount_allocated_ngn: item.amount_allocated_ngn + added,
+        excluded: item.excluded,
+        unresolved: item.unresolved
+      )
+    end
+
+    assert_equal 500, DuesCalculator.outstanding(obligations: updated, as_of: '2024-03-01')
   end
 
   def test_coverage_amount_skips_excluded_and_unresolved_periods

@@ -3,10 +3,13 @@ const cors = require("cors");
 const { spawn } = require("child_process");
 const path = require("path");
 const pool = require("./db");
+const { savePayment } = require("./payment_writes");
+const { saveNewMember } = require("./member_writes");
 const {
   calculateOutstandingBalance,
   loadMemberDuesRows,
   toMemberDuesPayload,
+  toPaymentObligations,
   getDashboardMetrics,
   getMembersDirectory,
 } = require("./outstanding");
@@ -139,6 +142,32 @@ app.get("/api/admin/dashboard", async (req, res) => {
   }
 });
 
+app.post("/api/admin/members", async (req, res) => {
+  const amount = Number(req.body.amount_ngn);
+  const firstName = typeof req.body.first_name === "string" ? req.body.first_name : "";
+  const lastName = typeof req.body.last_name === "string" ? req.body.last_name : "";
+  const duesStartMonth = req.body.dues_start_month;
+  const paymentDate = req.body.payment_date;
+  const coverage = req.body.coverage;
+
+  try {
+    const result = await saveNewMember({
+      pool,
+      firstName,
+      lastName,
+      duesStartMonth,
+      paymentDate,
+      amountNgN: amount,
+      coverage,
+      runPaymentPreview,
+    });
+    res.status(201).json(result);
+  } catch (error) {
+    console.error("Add member failed:", error);
+    res.status(422).json({ error: error.message || "Member could not be added." });
+  }
+});
+
 app.post("/api/admin/members/:id/payment-preview", async (req, res) => {
   try {
     const amount = Number(req.body.amount_ngn);
@@ -147,37 +176,66 @@ app.post("/api/admin/members/:id/payment-preview", async (req, res) => {
     }
 
     const { id } = req.params;
-    const dues = await loadMemberDuesRows(pool, id);
-    const unresolved = await pool.query(
-      `SELECT period_start FROM unresolved_historical_periods WHERE member_id = $1`,
+    const member = await pool.query(
+      `SELECT regular_dues_start_month FROM members WHERE id = $1`,
       [id]
     );
+    if (member.rows.length === 0) {
+      return res.status(404).json({ error: "Member not found" });
+    }
+
+    const dues = await loadMemberDuesRows(pool, id);
     const coverage = req.body.coverage;
     if (coverage && (!coverage.start_period || !coverage.end_period)) {
       return res.status(422).json({ error: "Select both a coverage start and end month." });
     }
 
-    const preview = await runPaymentPreview({
-      amount_ngn: amount,
-      obligations: [
-        ...dues,
-        ...unresolved.rows.map((row) => ({
-          period_start: row.period_start,
-          period_status: "active",
-          amount_due_ngn: 0,
-          amount_allocated_ngn: 0,
-          unresolved: true,
-        })),
-      ],
-      coverage,
-    });
-
+const preview = await runPaymentPreview({
+  amount_ngn: amount,
+  obligations: toPaymentObligations(
+    dues,
+    member.rows[0].regular_dues_start_month,
+    amount
+  ),
+  coverage,
+});
     res.json(preview);
   } catch (error) {
     console.error("Payment coverage preview failed:", error);
     res.status(422).json({
       error: "The amount must exactly clear whole outstanding monthly dues.",
     });
+  }
+});
+
+app.post("/api/admin/members/:id/payments", async (req, res) => {
+  const amount = Number(req.body.amount_ngn);
+  const { payment_date: paymentDate, note_reference: noteReference, coverage } = req.body;
+
+  if (!Number.isInteger(amount) || amount <= 0) {
+    return res.status(422).json({ error: "Enter a whole payment amount greater than zero." });
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(paymentDate || "")) {
+    return res.status(422).json({ error: "Enter a valid payment date." });
+  }
+  if (!coverage?.start_period || !coverage?.end_period) {
+    return res.status(422).json({ error: "Select both a coverage start and end month." });
+  }
+
+  try {
+    const result = await savePayment({
+      pool,
+      memberId: req.params.id,
+      amountNgN: amount,
+      paymentDate,
+      noteReference: typeof noteReference === "string" ? noteReference.trim() : null,
+      coverage,
+      runPaymentPreview,
+    });
+    res.status(201).json(result);
+  } catch (error) {
+    console.error("Payment save failed:", error);
+    res.status(422).json({ error: error.message || "Payment could not be saved." });
   }
 });
 
