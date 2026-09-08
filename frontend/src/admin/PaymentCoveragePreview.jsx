@@ -267,7 +267,7 @@ function PaymentCoveragePreview({ memberId, memberName, memberDues, onSaved }) {
           <span>Amount paid</span>
           <span className="payment-amount-control">
             <span className="payment-amount-prefix">₦</span>
-            <input id="payment-amount" inputMode="numeric" min="1" step="1" type="number" value={amount} onChange={changeAmount} />
+            <input id="payment-amount" inputMode="numeric" type="text" autoComplete="off" value={amount} onChange={changeAmount} />
           </span>
         </label>
         {!coverage && loading && <p className="payment-preview-status">Calculating coverage…</p>}

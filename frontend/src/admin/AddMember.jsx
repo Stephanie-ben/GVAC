@@ -340,7 +340,7 @@ function AddMember({ onNavigate }) {
           <span>Amount paid</span>
           <span className="payment-amount-control">
             <span className="payment-amount-prefix">₦</span>
-            <input id="add-payment-amount" inputMode="numeric" min="1" step="1" type="number" value={amount} onChange={(event) => setAmount(event.target.value)} />
+            <input id="add-payment-amount" inputMode="numeric" type="text" autoComplete="off" value={amount} onChange={(event) => setAmount(event.target.value)} />
           </span>
         </label>
         {amountError && <p className="payment-preview-error" role="alert">{amountError}</p>}
