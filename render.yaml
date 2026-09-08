@@ -1,0 +1,19 @@
+# Exported from Render on 2026-09-08T15:16:31Z
+version: "1"
+projects:
+- name: My project
+  environments:
+  - name: Production
+    services:
+    - type: web
+      name: GVAC-api
+      runtime: node
+      repo: https://github.com/Stephanie-ben/GVAC
+      plan: free
+      envVars:
+      - key: DATABASE_URL
+        sync: false
+      region: oregon
+      buildCommand: npm install
+      startCommand: node server/index.js
+      autoDeployTrigger: commit
