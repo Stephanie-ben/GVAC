@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 import AdminApp from './admin/AdminApp.jsx'
+import { initMemberAnalytics } from './analytics.js'
 
 function currentLocation() {
   return window.location.pathname + window.location.search
@@ -16,6 +17,10 @@ function Root() {
     window.addEventListener('popstate', sync)
     return () => window.removeEventListener('popstate', sync)
   }, [])
+
+  useEffect(() => {
+    initMemberAnalytics()
+  }, [path])
 
   const navigate = (to) => {
     window.history.pushState({}, '', to)
