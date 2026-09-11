@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const { saveNewMember, monthsInclusive } = require("../server/member_writes");
 
-function createPool({ failAfterMember = false } = {}) {
+function createPool({ failAfterMember = false, missingPeriods = [] } = {}) {
   const statements = [];
   const client = {
     async query(sql, params) {
@@ -11,7 +11,13 @@ function createPool({ failAfterMember = false } = {}) {
         if (failAfterMember) throw new Error("member insert failed");
         return { rows: [{ id: "member-1", full_name: params[0] }] };
       }
-      if (sql.includes("FROM dues_periods")) return { rows: [{ id: "period-1" }] };
+      if (sql.includes("INSERT INTO dues_periods")) {
+        return { rows: [{ id: `created-${params[0]}` }] };
+      }
+      if (sql.includes("FROM dues_periods")) {
+        if (missingPeriods.includes(params[0])) return { rows: [] };
+        return { rows: [{ id: "period-1" }] };
+      }
       if (sql.includes("INSERT INTO member_dues")) return { rows: [] };
       throw new Error(`Unexpected query: ${sql}`);
     },
@@ -71,6 +77,22 @@ async function run() {
   );
   assert.ok(failed.statements.includes("ROLLBACK"));
   assert.ok(!failed.statements.includes("COMMIT"));
+
+  const future = createPool({ missingPeriods: ["2038-08-01"] });
+  const futureResult = await saveNewMember({
+    pool: future.pool,
+    firstName: "Ada",
+    lastName: "Okoro",
+    duesStartMonth: "2038-08-01",
+    paymentDate: "2026-09-07",
+    amountNgN: 500,
+    coverage: { start_period: "2038-08-01", end_period: "2038-08-01" },
+    runPaymentPreview: async () => ({}),
+    savePaymentFn: async () => ({ payment_id: "payment-1" }),
+  });
+  assert.equal(futureResult.payment_id, "payment-1");
+  assert.ok(future.statements.some((sql) => sql.includes("INSERT INTO dues_periods")));
+  assert.ok(future.statements.includes("COMMIT"));
 
   console.log("member write transaction tests passed");
 }

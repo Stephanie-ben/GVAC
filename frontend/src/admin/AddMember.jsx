@@ -32,9 +32,11 @@ function paidYears() {
   return years
 }
 
-function coverageYears() {
+function coverageYears(extraYears = []) {
+  const extras = extraYears.map(Number).filter((year) => year > 0)
+  const maxYear = Math.max(2028, new Date().getFullYear(), ...extras)
   const years = []
-  for (let year = 2018; year <= 2028; year += 1) {
+  for (let year = 2018; year <= maxYear; year += 1) {
     if (year !== EXCLUDED_YEAR) years.push(year)
   }
   return years
@@ -208,7 +210,6 @@ function CoverageDateFields({ label, period, years, onChange, disabled = false }
 }
 
 function AddMember({ onNavigate }) {
-  const years = useMemo(() => coverageYears(), [])
   const dateYears = useMemo(() => paidYears(), [])
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -231,6 +232,10 @@ function AddMember({ onNavigate }) {
     ? 'The amount should clear one or more months.'
     : null
   const coverageEnd = monthCount ? coverageEndFromStart(coverageStart, monthCount) : ''
+  const years = useMemo(
+    () => coverageYears([coverageStart, coverageEnd].map((period) => Number((period || '').slice(0, 4)))),
+    [coverageStart, coverageEnd]
+  )
   const fullName = `${firstName.trim()} ${lastName.trim()}`.trim()
   const canContinue = Boolean(
     firstName.trim() &&

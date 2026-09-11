@@ -36,6 +36,28 @@ function monthsInclusive(startPeriod, endPeriod) {
   return months;
 }
 
+async function ensureActiveDuesPeriod(client, period) {
+  const existing = await client.query(
+    `SELECT id FROM dues_periods WHERE period_start = $1 AND period_status = 'active'`,
+    [period]
+  );
+  if (existing.rows.length > 0) return existing.rows[0].id;
+
+  const inserted = await client.query(
+    `INSERT INTO dues_periods (period_start, normal_amount_ngn, period_status)
+     VALUES ($1, $2, 'active')
+     ON CONFLICT (period_start) DO UPDATE SET
+       normal_amount_ngn = EXCLUDED.normal_amount_ngn,
+       period_status = EXCLUDED.period_status
+     RETURNING id`,
+    [period, MONTHLY_DUES_NGN]
+  );
+  if (inserted.rows.length === 0) {
+    throw new Error(`No active dues period exists for ${period.slice(0, 7)}.`);
+  }
+  return inserted.rows[0].id;
+}
+
 async function saveNewMember({
   pool,
   firstName,
@@ -79,19 +101,13 @@ async function saveNewMember({
     const memberId = member.rows[0].id;
 
     for (const period of coverageMonths) {
-      const duesPeriod = await client.query(
-        `SELECT id FROM dues_periods WHERE period_start = $1 AND period_status = 'active'`,
-        [period]
-      );
-      if (duesPeriod.rows.length === 0) {
-        throw new Error(`No active dues period exists for ${period.slice(0, 7)}.`);
-      }
+      const duesPeriodId = await ensureActiveDuesPeriod(client, period);
 
       await client.query(
         `INSERT INTO member_dues (
           member_id, dues_period_id, original_amount_ngn, writeoff_amount_ngn, amount_due_ngn, source_status
         ) VALUES ($1, $2, $3, 0, $3, 'outstanding')`,
-        [memberId, duesPeriod.rows[0].id, MONTHLY_DUES_NGN]
+        [memberId, duesPeriodId, MONTHLY_DUES_NGN]
       );
     }
 
