@@ -31,7 +31,7 @@ const METRIC_CARDS = [
   },
   {
     key: 'outstanding',
-    label: 'Outstanding Amount',
+    label: 'Total Outstanding Dues',
     icon: Banknote,
     iconClass: 'green',
     valueKey: 'amount_outstanding_ngn',
