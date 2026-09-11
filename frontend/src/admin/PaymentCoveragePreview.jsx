@@ -114,10 +114,10 @@ function coverageMismatchMessage(data, parsedAmount) {
   return 'Selected coverage does not match the oldest outstanding months this payment would clear.'
 }
 
-function CoverageDateFields({ label, period, years, onChange }) {
+function CoverageDateFields({ label, period, years, onChange, disabled = false }) {
   const { year, month } = splitPeriod(period)
   return (
-    <fieldset className="coverage-date-fields">
+    <fieldset className="coverage-date-fields" disabled={disabled}>
       <legend>{label}</legend>
       <label>
         <span>Month</span>
@@ -282,7 +282,7 @@ function PaymentCoveragePreview({ memberId, memberName, memberDues, onSaved }) {
           <div className="coverage-preview">
             <div className="coverage-date-grid">
               <CoverageDateFields label="Coverage Start" period={coverage.start_period} years={years} onChange={(period) => changeCoverage('start_period', period)} />
-              <CoverageDateFields label="Coverage End" period={coverage.end_period} years={years} onChange={(period) => changeCoverage('end_period', period)} />
+              <CoverageDateFields label="Coverage End" period={coverage.end_period} years={years} onChange={() => {}} disabled />
             </div>
             {loading && <p className="payment-preview-status">Calculating coverage…</p>}
             {previewError && <p className="payment-preview-error" role="alert">{previewError}</p>}
