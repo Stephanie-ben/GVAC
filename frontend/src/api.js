@@ -8,7 +8,12 @@ function resolveApiBaseUrl() {
       typeof configured === "string" &&
       /^(https?:\/\/)(localhost|127\.0\.0\.1)([:/]|$)/i.test(configured);
 
-    if (!pageIsLoopback && (!configured || configuredIsLoopback)) {
+    if (pageIsLoopback) {
+      if (configured && !configuredIsLoopback) return configured;
+      return `${window.location.protocol}//${pageHost}:3001`;
+    }
+
+    if (!configured || configuredIsLoopback) {
       return `${window.location.protocol}//${pageHost}:3001`;
     }
   }

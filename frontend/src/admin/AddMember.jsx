@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { API_BASE_URL } from '../api.js'
 import { namesMatch } from './memberName.js'
 import StatusFeedback from './StatusFeedback.jsx'
+import { adminFetch } from './adminApi.js'
 
 function portalRoot() {
   return document.getElementById('root') || document.body
@@ -252,9 +253,8 @@ function AddMember({ onNavigate }) {
     setSaveError(null)
     setSaving(true)
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/members`, {
+      const response = await adminFetch('/api/admin/members', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           first_name: firstName.trim(),
           last_name: lastName.trim(),

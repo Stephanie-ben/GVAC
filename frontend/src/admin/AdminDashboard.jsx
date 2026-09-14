@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Users, CircleCheck, CircleAlert, Banknote } from 'lucide-react'
-import { API_BASE_URL } from '../api.js'
+import { adminFetch } from './adminApi.js'
 import AdminMembers from './AdminMembers.jsx'
 import StatusFeedback from './StatusFeedback.jsx'
 
@@ -79,7 +79,7 @@ function AdminDashboard({ path, onNavigate }) {
   useEffect(() => {
     let cancelled = false
 
-    fetch(`${API_BASE_URL}/api/admin/dashboard`)
+    adminFetch('/api/admin/dashboard')
       .then((response) => {
         if (!response.ok) {
           throw new Error('Failed to load dashboard')

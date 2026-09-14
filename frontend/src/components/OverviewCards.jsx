@@ -53,7 +53,7 @@ function OverviewCards() {
         <CalendarDays size={24} strokeWidth={2} />
       </div>
       <strong>2018</strong>
-      <span>Dues tracking begins</span>
+      <span>Earliest dues record</span>
     </div>
   </div>
   )

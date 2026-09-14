@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const session = require("express-session");
 const pool = require("./db");
 const { savePayment } = require("./payment_writes");
 const { saveNewMember } = require("./member_writes");
@@ -12,12 +13,37 @@ const {
   getDashboardMetrics,
   getMembersDirectory,
 } = require("./outstanding");
+const {
+  SESSION_COOKIE_NAME,
+  adminAuthConfigured,
+  authenticateAdmin,
+  isAllowedFrontendOrigin,
+  requireAdmin,
+  sessionConfig,
+  sessionCookieOptions,
+  touchAdminSession,
+} = require("./admin_auth");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+app.set("trust proxy", 1);
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (isAllowedFrontendOrigin(origin)) {
+        return callback(null, true);
+      }
+      return callback(null, false);
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
+if (process.env.SESSION_SECRET) {
+  app.use(session(sessionConfig()));
+  app.use(touchAdminSession);
+}
 
 function runPaymentPreview(payload) {
   return Promise.resolve(previewPayment(payload));
@@ -110,6 +136,41 @@ app.get("/api/members/:id", async (req, res) => {
   }
 })
 
+app.post("/api/admin/login", (req, res) => {
+  if (!adminAuthConfigured()) {
+    return res.status(503).json({ error: "Admin login is not configured." });
+  }
+
+  const admin = authenticateAdmin(req.body && req.body.username, req.body && req.body.password);
+  if (!admin) {
+    return res.status(401).json({ error: "Invalid username or password." });
+  }
+
+  req.session.admin = { role: admin.role };
+  res.json({ authenticated: true, role: admin.role });
+});
+
+app.post("/api/admin/logout", (req, res) => {
+  const finish = () => {
+    res.clearCookie(SESSION_COOKIE_NAME, sessionCookieOptions());
+    res.json({ authenticated: false });
+  };
+
+  if (!req.session) {
+    return finish();
+  }
+
+  req.session.destroy(() => finish());
+});
+
+app.get("/api/admin/session", (req, res) => {
+  if (req.session && req.session.admin && req.session.admin.role) {
+    return res.json({ authenticated: true, role: req.session.admin.role });
+  }
+
+  res.status(401).json({ authenticated: false });
+});
+
 app.get("/api/admin/dashboard", async (req, res) => {
   try {
     const metrics = await getDashboardMetrics(pool);
@@ -120,7 +181,7 @@ app.get("/api/admin/dashboard", async (req, res) => {
   }
 });
 
-app.post("/api/admin/members", async (req, res) => {
+app.post("/api/admin/members", requireAdmin, async (req, res) => {
   const amount = Number(req.body.amount_ngn);
   const firstName = typeof req.body.first_name === "string" ? req.body.first_name : "";
   const lastName = typeof req.body.last_name === "string" ? req.body.last_name : "";
@@ -146,7 +207,7 @@ app.post("/api/admin/members", async (req, res) => {
   }
 });
 
-app.post("/api/admin/members/:id/payment-preview", async (req, res) => {
+app.post("/api/admin/members/:id/payment-preview", requireAdmin, async (req, res) => {
   try {
     const amount = Number(req.body.amount_ngn);
     if (!Number.isInteger(amount) || amount <= 0) {
@@ -186,7 +247,7 @@ const preview = await runPaymentPreview({
   }
 });
 
-app.post("/api/admin/members/:id/payments", async (req, res) => {
+app.post("/api/admin/members/:id/payments", requireAdmin, async (req, res) => {
   const amount = Number(req.body.amount_ngn);
   const { payment_date: paymentDate, note_reference: noteReference, coverage } = req.body;
 

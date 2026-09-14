@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import MemberSearch from '../components/MemberSearch.jsx'
-import { API_BASE_URL } from '../api.js'
+import { adminFetch } from './adminApi.js'
 
 const PAGE_SIZE = 20
 
@@ -81,7 +81,7 @@ function AdminMembers({ path, onNavigate }) {
     setLoading(true)
     setError(false)
 
-    fetch(`${API_BASE_URL}/api/members?${params.toString()}`)
+    adminFetch(`/api/members?${params.toString()}`)
       .then((response) => {
         if (!response.ok) {
           throw new Error('Failed to load members')
@@ -127,7 +127,7 @@ function AdminMembers({ path, onNavigate }) {
         onSearchChange={setSearch}
         showResults={false}
         inputId="admin-member-search"
-        label="Search members"
+        label="Find record"
         placeholder="Search members name"
         hint="Search using members first or last name"
       />

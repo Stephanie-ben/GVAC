@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { API_BASE_URL } from '../api.js'
+import { adminFetch } from './adminApi.js'
 import MemberRecord from '../components/MemberRecord.jsx'
 import RecordSkeleton from '../components/RecordSkeleton.jsx'
 import PaymentCoveragePreview from './PaymentCoveragePreview.jsx'
@@ -18,11 +18,11 @@ function AdminMemberRecordStub({ memberId, onNavigate }) {
     let cancelled = false
 
     Promise.all([
-      fetch(`${API_BASE_URL}/api/members/${memberId}`).then((response) => {
+      adminFetch(`/api/members/${memberId}`).then((response) => {
         if (!response.ok) throw new Error('Member not found')
         return response.json()
       }),
-      fetch(`${API_BASE_URL}/api/members/${memberId}/dues`).then((response) => {
+      adminFetch(`/api/members/${memberId}/dues`).then((response) => {
         if (!response.ok) throw new Error('Member dues not found')
         return response.json()
       }),

@@ -160,8 +160,7 @@ return (
          </h1>
 
           <p className="hero-description">
-            View your payment status and keep track of your contribution
-            history.
+            View your payment status and keep track of your contribution history
           </p>
 
           <MemberSearch

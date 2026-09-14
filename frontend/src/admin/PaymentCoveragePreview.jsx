@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
-import { API_BASE_URL } from '../api.js'
 import StatusFeedback from './StatusFeedback.jsx'
+import { adminFetch } from './adminApi.js'
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
@@ -187,8 +187,8 @@ function PaymentCoveragePreview({ memberId, memberName, memberDues, onSaved }) {
     setLoading(true)
     setPreviewError(null)
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/members/${memberId}/payment-preview`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+      const response = await adminFetch(`/api/admin/members/${memberId}/payment-preview`, {
+        method: 'POST',
         body: JSON.stringify({ amount_ngn: parsedAmount, ...(nextCoverage ? { coverage: nextCoverage } : {}) }),
       })
       const data = await response.json()
@@ -232,8 +232,8 @@ function PaymentCoveragePreview({ memberId, memberName, memberDues, onSaved }) {
     setSaving(true)
     setSaveError(null)
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/members/${memberId}/payments`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+      const response = await adminFetch(`/api/admin/members/${memberId}/payments`, {
+        method: 'POST',
         body: JSON.stringify({ amount_ngn: Number(amount), payment_date: paymentDate, coverage }),
       })
       const data = await response.json()
