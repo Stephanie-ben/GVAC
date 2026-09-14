@@ -72,4 +72,4 @@ puts "writeoff_2023 members: #{writeoff_members.size}; adjusted obligations: #{a
 puts "green write-off source markers: #{writeoff_rows.size}"
 puts "historical paid-month evidence: #{paid.size}; explicit outstanding source months: #{history.count { |row| row['status'] == 'outstanding' }}"
 puts 'aliases: M0068→M0052, M0101→M0069'
-puts 'unresolved historical gaps: 180 (kept outside member_dues and balances until admin resolution)'
+puts 'unresolved historical gaps: 156 (kept outside member_dues and balances until admin resolution)'

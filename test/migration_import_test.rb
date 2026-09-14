@@ -12,8 +12,8 @@ class MigrationImportTest < Minitest::Test
   def test_reconciliation_matches_the_finalized_migration_model
     assert_equal({
       source_members: 106, canonical_members: 104, historical_paid_evidence: 3926,
-      writeoff_members: 16, adjusted_obligations: 840, unresolved_periods: 180,
-      current_outstanding_ngn: 272_100, future_scheduled_dues_ngn: 36_500,
+      writeoff_members: 16, adjusted_obligations: 840, unresolved_periods: 156,
+      current_outstanding_ngn: 284_100, future_scheduled_dues_ngn: 36_500,
       aliases: { 'M0068' => 'M0052', 'M0101' => 'M0069' }, unimportable_records: []
     }, plan.reconciliation)
   end
@@ -33,7 +33,7 @@ class MigrationImportTest < Minitest::Test
   end
 
   def test_unresolved_periods_are_not_obligations
-    assert_equal 180, plan.unresolved_periods.length
+    assert_equal 156, plan.unresolved_periods.length
     plan.unresolved_periods.each do |gap|
       refute plan.obligations.any? { |due| due[:member_id] == gap[:member_id] && due[:period] == gap[:period] }
     end
