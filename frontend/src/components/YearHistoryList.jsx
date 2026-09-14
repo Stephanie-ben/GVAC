@@ -1,6 +1,7 @@
 import { Fragment } from 'react'
 import PaidYearMonths from './PaidYearMonths.jsx'
 import {
+  getHistoryYears,
   getYearDues,
   getYearStatus,
   getYearStatusClass,
@@ -12,17 +13,7 @@ function YearHistoryList({
   openYear,
   onOpenYearChange,
 }) {
-  const currentYear = new Date().getFullYear()
-  const duesYears = memberDues.map((due) =>
-    new Date(due.period_start).getFullYear()
-  )
-  const latestDuesYear = duesYears.length > 0 ? Math.max(...duesYears) : currentYear
-  const latestYear = Math.max(currentYear, latestDuesYear, 2018)
-
-  const years = Array.from(
-    { length: latestYear - 2018 + 1 },
-    (_, index) => latestYear - index
-  )
+  const years = getHistoryYears(memberDues)
 
   return (
   <div className="year-list">

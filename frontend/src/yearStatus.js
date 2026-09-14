@@ -5,6 +5,25 @@ export function getYearDues(memberDues, year) {
   })
 }
 
+export function getHistoryYears(memberDues, asOf = new Date()) {
+  const currentYear = asOf.getFullYear()
+  const duesYears = memberDues
+    .map((due) => new Date(due.period_start).getFullYear())
+    .filter((year) => Number.isFinite(year))
+
+  if (duesYears.length === 0) {
+    return [currentYear]
+  }
+
+  const earliestYear = Math.min(...duesYears)
+  const latestYear = Math.max(currentYear, ...duesYears)
+
+  return Array.from(
+    { length: latestYear - earliestYear + 1 },
+    (_, index) => latestYear - index
+  )
+}
+
 export function getYearStatus(year, memberDues, duesStartMonth) {
   if (year === 2020) {
     return "Excluded"

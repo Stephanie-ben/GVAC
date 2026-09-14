@@ -10,7 +10,7 @@ function due(periodStart, sourceStatus, amountDue = 500, amountAllocated = 0) {
 }
 
 async function run() {
-  const { getYearStatus, getMonthDisplayStatus } = await import("../frontend/src/yearStatus.js");
+  const { getHistoryYears, getYearStatus, getMonthDisplayStatus } = await import("../frontend/src/yearStatus.js");
 
   const writeoff2019 = [
     due("2019-01-15T12:00:00.000Z", "writeoff_marker", 300, 0),
@@ -43,6 +43,28 @@ async function run() {
   assert.equal(getYearStatus(2024, outstanding, "2021-09-15T12:00:00.000Z"), "Outstanding dues");
   assert.equal(getMonthDisplayStatus(2024, 4, outstanding, "2021-09-15T12:00:00.000Z"), "overdue");
   assert.equal(getMonthDisplayStatus(2021, 8, [], "2021-09-15T12:00:00.000Z"), "not-member");
+
+  const asOf2026 = new Date("2026-09-14T12:00:00.000Z");
+  assert.deepEqual(
+    getHistoryYears(writeoff2019, asOf2026),
+    [2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019]
+  );
+  assert.deepEqual(
+    getHistoryYears([due("2022-03-15T12:00:00.000Z", "paid", 500, 500)], asOf2026),
+    [2026, 2025, 2024, 2023, 2022]
+  );
+  assert.deepEqual(
+    getHistoryYears([due("2024-01-15T12:00:00.000Z", "outstanding", 500, 0)], asOf2026),
+    [2026, 2025, 2024]
+  );
+  assert.deepEqual(
+    getHistoryYears([
+      due("2019-01-15T12:00:00.000Z", "writeoff_marker", 300, 0),
+      due("2028-06-15T12:00:00.000Z", "paid", 500, 500),
+    ], asOf2026),
+    [2028, 2027, 2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019]
+  );
+  assert.deepEqual(getHistoryYears([], asOf2026), [2026]);
 
   console.log("year and month dues-history status tests passed");
 }
