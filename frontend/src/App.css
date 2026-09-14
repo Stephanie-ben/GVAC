@@ -1373,7 +1373,8 @@ button {
   color: #FFFFFF;
 }
 
-.month-item.not-member .month-status {
+.month-item.not-member .month-status,
+.month-item.writeoff .month-status {
   background: #C9CDD3;
   color: transparent;
 }
