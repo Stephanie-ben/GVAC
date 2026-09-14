@@ -20,29 +20,16 @@ export function getYearStatus(year, memberDues, duesStartMonth) {
     ? new Date(duesStartMonth)
     : null
 
-  const applicableDues = yearDues.filter((due) => {
-    if (!startDate) {
-      return true
-    }
-
-    const dueDate = new Date(due.period_start)
-
-    return dueDate >= startDate
-  })
-
-  if (applicableDues.length === 0) {
-    return "No dues recorded"
-  }
-
-  const hasOutstanding = applicableDues.some((due) => {
-    const amountDue = Number(due.amount_due_ngn)
-    const amountAllocated = Number(due.amount_allocated_ngn)
-
+  const hasOutstanding = yearDues.some((due) => {
     if (due.source_status === "writeoff_marker") {
       return false
     }
 
-    return amountAllocated < amountDue
+    if (startDate && new Date(due.period_start) < startDate) {
+      return false
+    }
+
+    return Number(due.amount_allocated_ngn) < Number(due.amount_due_ngn)
   })
 
   return hasOutstanding ? "Outstanding dues" : "Fully paid"

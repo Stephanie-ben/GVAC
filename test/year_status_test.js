@@ -19,7 +19,8 @@ async function run() {
   ];
 
   assert.equal(getYearStatus(2020, writeoff2019, "2021-09-01"), "Excluded");
-  assert.equal(getYearStatus(2019, writeoff2019, "2021-09-01"), "No dues recorded");
+  assert.equal(getYearStatus(2019, writeoff2019, "2021-09-01"), "Fully paid");
+  assert.equal(getYearStatus(2018, writeoff2019, "2021-09-01"), "No dues recorded");
 
   assert.equal(getMonthDisplayStatus(2019, 1, writeoff2019, "2021-09-01"), "writeoff");
   assert.equal(getMonthDisplayStatus(2019, 6, writeoff2019, "2021-09-01"), "writeoff");
