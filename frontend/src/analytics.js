@@ -40,6 +40,31 @@ export function trackMemberPageView(pathname = window.location.pathname) {
   })
 }
 
+export function memberAnalyticsEvent(eventName, pathname) {
+  if (memberAnalyticsPath(pathname) === null) return null
+  return ['event', eventName]
+}
+
+function trackMemberEvent(eventName, pathname) {
+  const path =
+    pathname ??
+    (typeof window !== 'undefined' ? window.location.pathname : '')
+  const payload = memberAnalyticsEvent(eventName, path)
+  if (!payload || typeof window === 'undefined' || typeof window.gtag !== 'function') {
+    return
+  }
+
+  window.gtag(...payload)
+}
+
+export function trackMemberSearch(pathname) {
+  trackMemberEvent('member_search', pathname)
+}
+
+export function trackRecordView(pathname) {
+  trackMemberEvent('record_view', pathname)
+}
+
 export function initMemberAnalytics() {
   if (started || typeof window === 'undefined') return
   if (memberAnalyticsPath(window.location.pathname) === null) return

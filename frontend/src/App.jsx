@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './App.css'
 import { API_BASE_URL } from './api.js'
 import MemberSearch from './components/MemberSearch.jsx'
@@ -6,11 +6,13 @@ import OverviewCards from './components/OverviewCards.jsx'
 import DuesNotice from './components/DuesNotice.jsx'
 import MemberRecord from './components/MemberRecord.jsx'
 import RecordSkeleton from './components/RecordSkeleton.jsx'
+import { trackMemberSearch, trackRecordView } from './analytics.js'
 
 function App() {
   const [search, setSearch] = useState('')
   const [selectedMember, setSelectedMember] = useState(null)
   const [loadingMember, setLoadingMember] = useState(true)
+  const pendingRecordView = useRef(false)
 
 useEffect(() => {
   const match = window.location.pathname.match(/^\/members\/(.+)$/)
@@ -100,6 +102,12 @@ useEffect(() => {
 }, [])
 
 useEffect(() => {
+  if (!selectedMember || !pendingRecordView.current) return
+  pendingRecordView.current = false
+  trackRecordView()
+}, [selectedMember])
+
+useEffect(() => {
   if (!selectedMember) {
     setMemberDues([])
     return
@@ -161,6 +169,8 @@ return (
             onSearchChange={setSearch}
             results={results}
             onSelectMember={(member) => {
+              trackMemberSearch()
+              pendingRecordView.current = true
               setSelectedMember(member)
               window.history.pushState(
                 {},
