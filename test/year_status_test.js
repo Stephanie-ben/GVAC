@@ -44,6 +44,31 @@ async function run() {
   assert.equal(getMonthDisplayStatus(2024, 4, outstanding, "2021-09-15T12:00:00.000Z"), "overdue");
   assert.equal(getMonthDisplayStatus(2021, 8, [], "2021-09-15T12:00:00.000Z"), "not-member");
 
+  const asOfSep2026 = new Date("2026-09-14T12:00:00.000Z");
+  const prepaidThroughJan2027 = [
+    due("2026-09-15T12:00:00.000Z", "paid", 500, 500),
+    due("2027-01-15T12:00:00.000Z", "paid", 500, 500),
+    due("2027-02-15T12:00:00.000Z", "outstanding", 500, 0),
+  ];
+  assert.equal(getMonthDisplayStatus(2026, 9, prepaidThroughJan2027, "2021-01-01", asOfSep2026), "paid");
+  assert.equal(getMonthDisplayStatus(2026, 10, prepaidThroughJan2027, "2021-01-01", asOfSep2026), "upcoming");
+  assert.equal(getMonthDisplayStatus(2027, 1, prepaidThroughJan2027, "2021-01-01", asOfSep2026), "paid");
+  assert.equal(getMonthDisplayStatus(2027, 2, prepaidThroughJan2027, "2021-01-01", asOfSep2026), "upcoming");
+  assert.equal(getMonthDisplayStatus(2027, 12, prepaidThroughJan2027, "2021-01-01", asOfSep2026), "upcoming");
+  assert.equal(getMonthDisplayStatus(2028, 3, prepaidThroughJan2027, "2021-01-01", asOfSep2026), "upcoming");
+
+  const currentAndPastUnpaid = [
+    due("2026-08-15T12:00:00.000Z", "outstanding", 500, 0),
+    due("2026-09-15T12:00:00.000Z", "outstanding", 500, 0),
+    due("2026-10-15T12:00:00.000Z", "outstanding", 500, 0),
+    due("2026-12-15T12:00:00.000Z", "paid", 500, 500),
+  ];
+  assert.equal(getMonthDisplayStatus(2026, 8, currentAndPastUnpaid, "2021-01-01", asOfSep2026), "overdue");
+  assert.equal(getMonthDisplayStatus(2026, 9, currentAndPastUnpaid, "2021-01-01", asOfSep2026), "overdue");
+  assert.equal(getMonthDisplayStatus(2026, 10, currentAndPastUnpaid, "2021-01-01", asOfSep2026), "upcoming");
+  assert.equal(getMonthDisplayStatus(2026, 12, currentAndPastUnpaid, "2021-01-01", asOfSep2026), "paid");
+  assert.equal(getMonthDisplayStatus(2019, 1, writeoff2019, "2021-09-01", asOfSep2026), "writeoff");
+
   const asOf2026 = new Date("2026-09-14T12:00:00.000Z");
   assert.deepEqual(
     getHistoryYears(writeoff2019, asOf2026),

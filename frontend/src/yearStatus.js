@@ -68,7 +68,13 @@ export function getYearStatusClass(year, memberDues, duesStartMonth) {
   return ""
 }
 
-export function getMonthDisplayStatus(year, monthNumber, dues, duesStartMonth) {
+export function getMonthDisplayStatus(
+  year,
+  monthNumber,
+  dues,
+  duesStartMonth,
+  asOf = new Date()
+) {
   const due = dues.find((item) => {
     const date = new Date(item.period_start)
     return date.getFullYear() === year && date.getMonth() + 1 === monthNumber
@@ -94,6 +100,20 @@ export function getMonthDisplayStatus(year, monthNumber, dues, duesStartMonth) {
     if (amountAllocated === amountDue) {
       return "paid"
     }
+  }
+
+  const asOfYear = asOf.getFullYear()
+  const asOfMonth = asOf.getMonth() + 1
+  const isFutureMonth =
+    year > asOfYear || (year === asOfYear && monthNumber > asOfMonth)
+
+  if (isFutureMonth) {
+    return "upcoming"
+  }
+
+  if (due) {
+    const amountDue = Number(due.amount_due_ngn)
+    const amountAllocated = Number(due.amount_allocated_ngn)
 
     if (due.source_status === "outstanding" && amountAllocated < amountDue) {
       return "overdue"
