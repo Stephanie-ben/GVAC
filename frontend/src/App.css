@@ -76,7 +76,7 @@ button {
 .hero {
   max-width: 720px;
   margin: 0 auto;
-  padding: 56px 24px 52px;
+  padding: 56px 24px 24px;
 }
 
 @media (max-width: 520px) {
