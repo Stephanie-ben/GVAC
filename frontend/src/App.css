@@ -1122,7 +1122,7 @@ button {
 .record-header .eyebrow {
   margin: 0 0 6px;
   color: #777D87;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.8px;
 }
@@ -1182,6 +1182,10 @@ button {
 .payment-history .section-heading {
   top: 0;
   margin-bottom: 12px;
+}
+
+.payment-history .eyebrow {
+  font-size: 12px;
 }
 
 .payment-list {
@@ -1432,6 +1436,14 @@ button {
 .balance-card .eyebrow,
 .account-details-card .eyebrow {
   margin: 0;
+}
+
+.balance-card .eyebrow {
+  font-size: 12px;
+}
+
+.account-details-card .eyebrow {
+  font-size: 12px;
 }
 
 .balance-amount {

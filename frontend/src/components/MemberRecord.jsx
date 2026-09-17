@@ -46,7 +46,7 @@ function MemberRecord({
 
 <section className="account-summary">
   <div className="balance-card">
-    <p className="eyebrow">OUTSTANDING BALANCE</p>
+    <p className="eyebrow">OUTSTANDING BALANCE AS AT {new Date().getFullYear()}</p>
     <p className="balance-amount">
       ₦{Number(outstandingBalance).toLocaleString()}
     </p>
