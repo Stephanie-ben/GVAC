@@ -23,6 +23,7 @@ const {
   sessionCookieOptions,
   touchAdminSession,
 } = require("./admin_auth");
+const { memberSearchFilter } = require("./member_search");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -54,15 +55,16 @@ app.get("/api/members", async (req, res) => {
     const search = req.query.search || "";
 
     if (req.query.page === undefined) {
+      const { sql, params } = memberSearchFilter(search);
       const result = await pool.query(
         `
       SELECT id, full_name, membership_status
       FROM members
-      WHERE full_name ILIKE $1
+      WHERE ${sql}
       ORDER BY full_name
       LIMIT 20
       `,
-        [`%${search}%`]
+        params
       );
 
       return res.json(result.rows);
