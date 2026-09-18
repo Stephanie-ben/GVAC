@@ -30,7 +30,7 @@ button {
 
 .app {
   min-height: 100vh;
-  padding-bottom: 84px;
+  padding-bottom: 0;
   background: #f7f7f5;
 }
 
@@ -271,21 +271,24 @@ button {
   gap: 10px;
   padding: 12px 14px;
   border: 0;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid rgba(23, 32, 51, 0.06);
   background: #ffffff;
   color: #172033;
   font: inherit;
   font-size: 14px;
   text-align: left;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .search-result:last-child {
   border-bottom: 0;
 }
 
-.search-result:hover {
-  background: #f7f9ff;
+.search-result:hover,
+.search-result:active,
+.search-result:focus {
+  background: #ffffff;
 }
 
 .result-icon {
@@ -1831,6 +1834,42 @@ button {
   text-align: left;
 }
 
+.admin-member-record {
+  --admin-record-nav-height: 68px;
+}
+
+.admin-member-record .admin-shell-header {
+  position: relative;
+  z-index: 110;
+  height: var(--admin-record-nav-height);
+  min-height: var(--admin-record-nav-height);
+  padding: 12px 24px 16px;
+  box-sizing: border-box;
+}
+
+.admin-member-record .admin-shell-main {
+  max-width: none;
+  padding: 0;
+  margin: 0;
+}
+
+.admin-member-record .admin-shell-main > .app {
+  min-height: 0;
+}
+
+.admin-member-record .sticky-back-header {
+  top: 0;
+  height: var(--admin-record-nav-height);
+  min-height: var(--admin-record-nav-height);
+  padding: 0 24px;
+  box-sizing: border-box;
+  border-bottom: 0;
+}
+
+.admin-member-record.admin-header-offscreen .sticky-back-header {
+  border-bottom: 1px solid #E5E7EB;
+}
+
 .admin-dashboard-header {
   display: flex;
   align-items: center;
@@ -1872,12 +1911,27 @@ button {
   white-space: nowrap;
 }
 
-.add-member-page .back-button {
-  margin-bottom: 16px;
+.admin-member-record .add-member-page {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 24px 48px;
+  box-sizing: border-box;
+}
+
+@media (min-width: 521px) {
+  .admin-member-record .sticky-back-header {
+    height: 56px;
+    min-height: 56px;
+    align-items: center;
+  }
 }
 
 .add-member-header {
-  margin-bottom: 8px;
+  margin-top: 0;
+  padding-top: 24px;
+  padding-bottom: 0;
+  margin-bottom: 0;
 }
 
 .add-member-header .admin-add-member {
@@ -2377,6 +2431,16 @@ button {
 }
 
 @media (max-width: 520px) {
+  .admin-member-record {
+    --admin-record-nav-height: 69px;
+  }
+
+  .admin-member-record .sticky-back-header {
+    height: 64px;
+    min-height: 64px;
+    align-items: center;
+  }
+
   .admin-shell-header {
     justify-content: flex-start;
   }

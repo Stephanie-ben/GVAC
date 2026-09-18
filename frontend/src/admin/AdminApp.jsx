@@ -88,7 +88,7 @@ function AdminApp({ path, onNavigate }) {
 
   if (pathOnly === '/admin/add-member') {
     return (
-      <AdminShell {...shell}>
+      <AdminShell {...shell} memberRecord>
         <AddMember onNavigate={onNavigate} />
       </AdminShell>
     )
@@ -96,7 +96,7 @@ function AdminApp({ path, onNavigate }) {
 
   if (memberRecordMatch) {
     return (
-      <AdminShell {...shell}>
+      <AdminShell {...shell} memberRecord>
         <AdminMemberRecordStub
           memberId={memberRecordMatch[1]}
           onNavigate={onNavigate}

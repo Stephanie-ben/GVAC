@@ -58,6 +58,7 @@ useEffect(() => {
   const [results, setResults] = useState([])
   const [searchPending, setSearchPending] = useState(false)
   const [memberDues, setMemberDues] = useState([])
+  const [duesReady, setDuesReady] = useState(false)
   const [duesStartMonth, setDuesStartMonth] = useState(null)
   const [outstandingBalance, setOutstandingBalance] = useState(0)
   const [paymentAccounts, setPaymentAccounts] = useState([])
@@ -115,23 +116,27 @@ useEffect(() => {
 useEffect(() => {
   if (!selectedMember) {
     setMemberDues([])
+    setDuesReady(false)
     return
   }
 
+  setDuesReady(false)
   fetch(`${API_BASE_URL}/api/members/${selectedMember.id}/dues`)
     .then((response) => response.json())
     .then((data) => {
   setMemberDues(data.dues)
   setDuesStartMonth(data.regular_dues_start_month)
   setOutstandingBalance(data.outstanding_balance_ngn)
+  setDuesReady(true)
 })
     .catch((error) => {
       console.error('Member dues lookup failed:', error)
       setMemberDues([])
+      setDuesReady(true)
     })
 }, [selectedMember])
 
-if (loadingMember) {
+if (loadingMember || (selectedMember && !duesReady)) {
   return <RecordSkeleton />
 }
 

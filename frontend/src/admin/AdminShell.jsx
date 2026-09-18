@@ -5,9 +5,31 @@ function isMobileAdminHeader() {
   return typeof window !== 'undefined' && window.matchMedia('(max-width: 520px)').matches
 }
 
-function AdminShell({ children, role, onLogout }) {
+function AdminShell({ children, role, onLogout, memberRecord = false }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [headerOffscreen, setHeaderOffscreen] = useState(false)
   const menuRef = useRef(null)
+  const headerRef = useRef(null)
+
+  useEffect(() => {
+    if (!memberRecord) {
+      setHeaderOffscreen(false)
+      return undefined
+    }
+
+    const header = headerRef.current
+    if (!header) return undefined
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setHeaderOffscreen(!entry.isIntersecting)
+      },
+      { threshold: 0 }
+    )
+
+    observer.observe(header)
+    return () => observer.disconnect()
+  }, [memberRecord])
 
   useEffect(() => {
     if (!menuOpen) return undefined
@@ -41,8 +63,15 @@ function AdminShell({ children, role, onLogout }) {
   }
 
   return (
-    <div className="app admin-app">
-      <header className="admin-shell-header">
+    <div
+      className={[
+        'app',
+        'admin-app',
+        memberRecord ? 'admin-member-record' : '',
+        headerOffscreen ? 'admin-header-offscreen' : '',
+      ].filter(Boolean).join(' ')}
+    >
+      <header className="admin-shell-header" ref={headerRef}>
         <p className="admin-shell-brand">GVAC Admin</p>
         <p className="zone-title admin-zone-title">
           <span>GVAC</span>

@@ -67,7 +67,7 @@ function AdminMemberRecordStub({ memberId, onNavigate }) {
       onOpenYearChange={setOpenYear}
       onBack={() => onNavigate('/admin')}
       backLabel="← Back to Members"
-      eyebrow="ADMIN MEMBER RECORD"
+      eyebrow="MEMBER RECORD"
       headerAction={<button className="record-payment-button" type="button" onClick={() => setPaymentManagementOpen((isOpen) => !isOpen)}>{paymentManagementOpen ? 'Hide Payment' : 'Record Payment'}</button>}
       showAccountDetails={false}
       beforeHistory={paymentManagementOpen ? <PaymentCoveragePreview memberId={memberId} memberName={member.full_name} memberDues={memberDues} onSaved={() => setRecordVersion((version) => version + 1)} /> : null}

@@ -41,7 +41,6 @@ function MemberSearch({
                     key={member.id}
                     onClick={() => onSelectMember(member)}
                   >
-                    <span className="result-icon">○</span>
                     <span>{member.full_name}</span>
                   </button>
                 ))}

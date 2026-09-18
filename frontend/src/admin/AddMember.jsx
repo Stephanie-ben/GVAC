@@ -309,9 +309,11 @@ function AddMember({ onNavigate }) {
 
   return (
     <section className="admin-page add-member-page">
-      <button className="back-button" type="button" onClick={() => onNavigate('/admin')}>
-        ← Back to Home
-      </button>
+      <div className="sticky-back-header">
+        <button className="back-button" type="button" onClick={() => onNavigate('/admin')}>
+          ← Back to Home
+        </button>
+      </div>
       <div className="admin-dashboard-header add-member-header">
         <h1>Add Member</h1>
         <button className="admin-add-member" type="button" onClick={handleContinue}>
@@ -320,7 +322,7 @@ function AddMember({ onNavigate }) {
       </div>
 
       <section className="add-member-card">
-        <div className="section-heading"><p className="eyebrow">MEMBER INFORMATION</p></div>
+        <div className="section-heading"><p className="eyebrow">MEMBER DETAILS</p></div>
         <div className="add-member-grid">
           <label className="payment-detail-field" htmlFor="add-first-name">
             <span>First Name</span>
