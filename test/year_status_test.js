@@ -19,7 +19,7 @@ async function run() {
   ];
 
   assert.equal(getYearStatus(2020, writeoff2019, "2021-09-01"), "Excluded");
-  assert.equal(getYearStatus(2019, writeoff2019, "2021-09-01"), "Fully paid");
+  assert.equal(getYearStatus(2019, writeoff2019, "2021-09-01"), "Paid");
   assert.equal(getYearStatus(2018, writeoff2019, "2021-09-01"), "No dues recorded");
 
   assert.equal(getMonthDisplayStatus(2019, 1, writeoff2019, "2021-09-01"), "writeoff");
@@ -33,14 +33,14 @@ async function run() {
     due("2019-12-15T12:00:00.000Z", "paid", 500, 500),
   ];
 
-  assert.equal(getYearStatus(2019, mixed2019, "2019-06-15T12:00:00.000Z"), "Fully paid");
+  assert.equal(getYearStatus(2019, mixed2019, "2019-06-15T12:00:00.000Z"), "Paid");
   assert.equal(getMonthDisplayStatus(2019, 1, mixed2019, "2019-06-15T12:00:00.000Z"), "writeoff");
   assert.equal(getMonthDisplayStatus(2019, 5, mixed2019, "2019-06-15T12:00:00.000Z"), "writeoff");
   assert.equal(getMonthDisplayStatus(2019, 6, mixed2019, "2019-06-15T12:00:00.000Z"), "paid");
   assert.equal(getMonthDisplayStatus(2019, 12, mixed2019, "2019-06-15T12:00:00.000Z"), "paid");
 
   const outstanding = [due("2024-04-15T12:00:00.000Z", "outstanding", 500, 0)];
-  assert.equal(getYearStatus(2024, outstanding, "2021-09-15T12:00:00.000Z"), "Outstanding dues");
+  assert.equal(getYearStatus(2024, outstanding, "2021-09-15T12:00:00.000Z"), "Outstanding");
   assert.equal(getMonthDisplayStatus(2024, 4, outstanding, "2021-09-15T12:00:00.000Z"), "overdue");
   assert.equal(getMonthDisplayStatus(2021, 8, [], "2021-09-15T12:00:00.000Z"), "not-member");
 

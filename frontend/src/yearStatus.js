@@ -51,7 +51,7 @@ export function getYearStatus(year, memberDues, duesStartMonth) {
     return Number(due.amount_allocated_ngn) < Number(due.amount_due_ngn)
   })
 
-  return hasOutstanding ? "Outstanding dues" : "Fully paid"
+  return hasOutstanding ? "Outstanding" : "Paid"
 }
 
 export function getYearStatusClass(year, memberDues, duesStartMonth) {
@@ -61,7 +61,7 @@ export function getYearStatusClass(year, memberDues, duesStartMonth) {
     return "no-dues"
   }
 
-  if (status === "Outstanding dues") {
+  if (status === "Outstanding") {
     return "outstanding"
   }
 
