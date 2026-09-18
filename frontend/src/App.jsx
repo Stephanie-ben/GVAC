@@ -56,6 +56,7 @@ useEffect(() => {
 
   const [openYear, setOpenYear] = useState(2026)
   const [results, setResults] = useState([])
+  const [searchPending, setSearchPending] = useState(false)
   const [memberDues, setMemberDues] = useState([])
   const [duesStartMonth, setDuesStartMonth] = useState(null)
   const [outstandingBalance, setOutstandingBalance] = useState(0)
@@ -64,10 +65,12 @@ useEffect(() => {
 useEffect(() => {
     if (!search.trim()) {
     setResults([])
+    setSearchPending(false)
     return
   }
 
   let cancelled = false
+  setSearchPending(true)
 
   const timer = setTimeout(() => {
     fetch(`${API_BASE_URL}/api/members?search=${encodeURIComponent(search)}`)
@@ -75,12 +78,14 @@ useEffect(() => {
       .then((data) => {
         if (!cancelled) {
           setResults(data)
+          setSearchPending(false)
         }
       })
       .catch((error) => {
         if (!cancelled) {
           console.error('Member search failed:', error)
           setResults([])
+          setSearchPending(false)
         }
       })
   }, 250)
@@ -167,6 +172,7 @@ return (
             search={search}
             onSearchChange={setSearch}
             results={results}
+            isSearching={searchPending}
             onSelectMember={(member) => {
               trackMemberSearch()
               pendingRecordView.current = true

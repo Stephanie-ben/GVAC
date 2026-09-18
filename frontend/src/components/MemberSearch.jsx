@@ -2,6 +2,7 @@ function MemberSearch({
   search,
   onSearchChange,
   results = [],
+  isSearching = false,
   onSelectMember,
   showResults = true,
   inputId = 'member-search',
@@ -45,7 +46,7 @@ function MemberSearch({
               </div>
             )}
 
-            {showResults && search.trim() && results.length === 0 && (
+            {showResults && search.trim() && !isSearching && results.length === 0 && (
               <div className="no-results">
                 No member found. Try another name.
               </div>
