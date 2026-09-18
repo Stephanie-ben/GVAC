@@ -119,11 +119,32 @@ button {
   box-shadow: 0 8px 30px rgba(25, 30, 40, 0.05);
 }
 
+.hero .search-card,
+.admin-page .search-card {
+  padding-top: 20px;
+  padding-bottom: 26px;
+}
+
+.hero .search-card label,
+.admin-page .search-card label {
+  margin-top: 0;
+}
+
+.hero .search-card,
+.hero .search-card label {
+  text-align: left;
+}
+
+.hero .search-card .search-input,
+.admin-page .search-card .search-input {
+  margin-bottom: 0;
+}
+
 .search-card label {
   display: block;
   margin-bottom: 10px;
   color: #252b36;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -148,7 +169,7 @@ button {
 
 .search-input span {
   color: #777d87;
-  font-size: 23px;
+  font-size: 24px;
 }
 
 .search-input input {
@@ -157,7 +178,7 @@ button {
   outline: 0;
   background: transparent;
   color: #202630;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .search-input input::placeholder {
@@ -311,13 +332,14 @@ button {
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: #0275D8;
+  width: 24px;
+  color: #969ba3;
   pointer-events: none;
 }
 
 .search-input input {
   width: 100%;
-  padding-left: 44px;
+  padding-left: 24px;
 }
 
 /* Primary blue */

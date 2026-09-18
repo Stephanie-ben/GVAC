@@ -127,9 +127,8 @@ function AdminMembers({ path, onNavigate }) {
         onSearchChange={setSearch}
         showResults={false}
         inputId="admin-member-search"
-        label="Find record"
-        placeholder="Search members name"
-        hint="Search using members first or last name"
+        label="Find member record"
+        placeholder="Search by member first or last name"
       />
 
       <div className="admin-filters" role="tablist" aria-label="Member filters">

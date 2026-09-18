@@ -7,8 +7,8 @@ function MemberSearch({
   showResults = true,
   inputId = 'member-search',
   label = 'Find your record',
-  placeholder = 'Search your name',
-  hint = 'Search using your first or last name',
+  placeholder = 'Search by first or last name',
+  hint,
 }) {
   return (
           <div className="search-card">
@@ -27,9 +27,11 @@ function MemberSearch({
               />
             </div>
 
-            <p className="search-hint">
-              {hint}
-            </p>
+            {hint ? (
+              <p className="search-hint">
+                {hint}
+              </p>
+            ) : null}
 
             {showResults && results.length > 0 && (
               <div className="search-results">
