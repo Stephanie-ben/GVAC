@@ -12,7 +12,7 @@ function MemberRecord({
   onOpenYearChange,
   onBack,
   backLabel = '← Back to Home',
-  eyebrow = 'PERSONAL DUES RECORD',
+  eyebrow = 'PERSONAL RECORD',
   headerAction = null,
   memberDetails = null,
   showAccountDetails = true,
