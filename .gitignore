@@ -9,3 +9,4 @@ data/
 # Operating-system files
 .DS_Store
 
+db/migrations/001_import_validated_history.sql
