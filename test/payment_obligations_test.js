@@ -108,6 +108,63 @@ async function run() {
     ["2022-02-01"]
   );
 
+  const anitaPaid2024 = [];
+  for (let month = 1; month <= 12; month += 1) {
+    anitaPaid2024.push(
+      due({
+        period: `2024-${String(month).padStart(2, "0")}`,
+        status: "paid",
+        allocated: 500,
+      })
+    );
+  }
+
+  const anita12500 = toPaymentObligations(anitaPaid2024, "2024-01-01", 12500);
+  assert.equal(anita12500[0].period_start, "2025-01-01");
+  assert.equal(anita12500[anita12500.length - 1].period_start, "2027-01-01");
+  assert.equal(anita12500.length, 25);
+  assert.ok(anita12500.every((row) => row.period_start.slice(0, 4) !== "2024"));
+
+  const anitaPreview = await runPaymentPreview({
+    amount_ngn: 12500,
+    as_of: "2026-09-01",
+    obligations: anita12500,
+  });
+  assert.equal(anitaPreview.coverage.start_period, "2025-01-01");
+  assert.equal(anitaPreview.coverage.end_period, "2027-01-01");
+  assert.equal(anitaPreview.allocations.length, 25);
+  assert.equal(anitaPreview.allocations[0].period_start, "2025-01-01");
+  assert.equal(
+    anitaPreview.allocations[anitaPreview.allocations.length - 1].period_start,
+    "2027-01-01"
+  );
+
+  const unpaidThenPaid = toPaymentObligations(
+    [
+      due({ period: "2023-12", status: "outstanding" }),
+      due({ period: "2024-01", status: "paid", allocated: 500 }),
+      due({ period: "2024-02", status: "paid", allocated: 500 }),
+    ],
+    "2023-12-01",
+    1500
+  );
+  assert.deepEqual(
+    unpaidThenPaid.map((row) => row.period_start),
+    ["2023-12-01", "2024-03-01", "2024-04-01"]
+  );
+
+  const unpaidThenPaidPreview = await runPaymentPreview({
+    amount_ngn: 1500,
+    as_of: "2026-09-01",
+    obligations: unpaidThenPaid,
+  });
+  assert.equal(unpaidThenPaidPreview.coverage.start_period, "2023-12-01");
+  assert.equal(unpaidThenPaidPreview.coverage.end_period, "2024-04-01");
+  assert.deepEqual(
+    unpaidThenPaidPreview.allocations.map((row) => row.period_start),
+    ["2023-12-01", "2024-03-01", "2024-04-01"]
+  );
+
   console.log("payment obligation mapping tests passed");
 }
 

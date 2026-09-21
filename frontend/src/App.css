@@ -135,6 +135,11 @@ button {
   text-align: left;
 }
 
+.hero .search-card label,
+.admin-page .search-card label {
+  font-size: 16px;
+}
+
 .hero .search-card .search-input,
 .admin-page .search-card .search-input {
   margin-bottom: 0;
@@ -303,6 +308,107 @@ button {
   background: #f7f7f5;
   color: #737983;
   font-size: 13px;
+}
+
+.search-help-card {
+  margin-top: 16px;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(25, 30, 40, 0.05);
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.search-help-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.search-help-heading .eyebrow {
+  margin: 0;
+  color: #252b36;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: normal;
+}
+
+.search-help-person-icon.overview-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.search-help-copy {
+  margin: 0 0 16px;
+  color: #737983;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.search-help-contacts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.search-help-contacts li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid rgba(23, 32, 51, 0.06);
+}
+
+.search-help-contacts li:last-child {
+  padding-bottom: 0;
+}
+
+.search-help-contact-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.search-help-name {
+  color: #172033;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.search-help-role {
+  color: #737983;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.search-help-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.search-help-wa-icon {
+  display: flex;
+  color: #25D366;
+}
+
+.search-help-phone {
+  color: #0275D8;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.4;
 }
 /* Home page refinements */
 
@@ -599,6 +705,7 @@ button {
   color: #ffffff;
   font-size: 13px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .payment-record-flow {
@@ -613,6 +720,21 @@ button {
   background: #ffffff;
 }
 
+.record-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.record-form-actions .admin-add-member,
+.record-form-actions .save-payment-button {
+  width: 100%;
+}
+
+.payment-record-flow > .record-form-actions {
+  margin-top: 20px;
+}
+
 .payment-record-flow > .payment-management-card:first-child {
   margin-top: 0;
 }
@@ -620,6 +742,24 @@ button {
 .payment-management-card .section-heading {
   position: static;
   margin-bottom: 12px;
+}
+
+.edit-member-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.edit-member-heading .section-heading {
+  margin: 0;
+}
+
+.edit-member-heading .record-edit-button {
+  flex: 0 0 auto;
+  width: auto;
+  white-space: nowrap;
 }
 
 .payment-management-card .eyebrow {
@@ -750,7 +890,7 @@ button {
 }
 
 .save-payment-button {
-  margin-top: 20px;
+  margin-top: 0;
   padding: 10px 15px;
   border: 1px solid #0275d8;
   border-radius: 8px;
@@ -1034,6 +1174,40 @@ button {
   font-weight: 600;
 }
 
+.coverage-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.coverage-status p {
+  margin: 0;
+}
+
+.coverage-status svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.coverage-status-success {
+  background: #E9F8EF;
+  color: #1F9D55;
+}
+
+.coverage-status-error {
+  background: #FDECEC;
+  color: #D64545;
+}
+
+.coverage-preview .record-form-actions {
+  margin-top: 24px;
+}
+
 @media (max-width: 520px) {
   .coverage-date-grid {
     grid-template-columns: 1fr;
@@ -1157,7 +1331,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .record-header h1 {
@@ -1167,9 +1341,37 @@ button {
   line-height: 1.15;
   letter-spacing: -0.5px;
   font-weight: 600;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
-.record-header-row .record-payment-button {
+.record-header-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.record-edit-button {
+  padding: 8px 12px;
+  border: 1px solid #0275D8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0275D8;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.record-edit-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.record-header-row .record-payment-button,
+.record-header-row .record-edit-button {
   flex: 0 0 auto;
 }
 
@@ -2431,6 +2633,18 @@ button {
 }
 
 @media (max-width: 520px) {
+  .record-header-row:has(.record-header-actions) {
+    flex-wrap: wrap;
+  }
+
+  .record-header-row:has(.record-header-actions) h1 {
+    flex: 1 1 100%;
+  }
+
+  .record-header-actions {
+    width: 100%;
+  }
+
   .admin-member-record {
     --admin-record-nav-height: 69px;
   }

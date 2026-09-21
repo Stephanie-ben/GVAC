@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import './App.css'
 import { API_BASE_URL } from './api.js'
 import MemberSearch from './components/MemberSearch.jsx'
+import SearchHelpCard from './components/SearchHelpCard.jsx'
 import OverviewCards from './components/OverviewCards.jsx'
 import DuesNotice from './components/DuesNotice.jsx'
 import MemberRecord from './components/MemberRecord.jsx'
@@ -189,6 +190,8 @@ return (
               )
             }}
           />
+
+          <SearchHelpCard />
         </section>
 
         <section className="overview">

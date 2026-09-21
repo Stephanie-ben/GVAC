@@ -136,4 +136,59 @@ async function saveNewMember({
   }
 }
 
-module.exports = { saveNewMember, monthsInclusive };
+async function updateMember({ pool, memberId, fullName, duesStartMonth }) {
+  const name = String(fullName || "").trim().replace(/\s+/g, " ");
+  if (!name) throw new Error("Enter the member's full name.");
+  if (!PERIOD_RE.test(duesStartMonth || "")) throw new Error("Enter a valid dues start month.");
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const member = await client.query(
+      `SELECT id FROM members WHERE id = $1 FOR UPDATE`,
+      [memberId]
+    );
+    if (member.rows.length === 0) throw new Error("Member not found");
+
+    await client.query(
+      `UPDATE members
+       SET full_name = $2, regular_dues_start_month = $3
+       WHERE id = $1`,
+      [memberId, name, duesStartMonth]
+    );
+
+    await client.query(
+      `DELETE FROM dues_allocations da
+       USING member_dues md
+       JOIN dues_periods dp ON dp.id = md.dues_period_id
+       WHERE da.member_dues_id = md.id
+         AND md.member_id = $1
+         AND dp.period_start < $2::date`,
+      [memberId, duesStartMonth]
+    );
+
+    await client.query(
+      `DELETE FROM member_dues md
+       USING dues_periods dp
+       WHERE md.dues_period_id = dp.id
+         AND md.member_id = $1
+         AND dp.period_start < $2::date`,
+      [memberId, duesStartMonth]
+    );
+
+    await client.query("COMMIT");
+    return {
+      id: memberId,
+      full_name: name,
+      regular_dues_start_month: duesStartMonth,
+    };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+module.exports = { saveNewMember, updateMember, monthsInclusive };

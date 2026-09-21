@@ -3,6 +3,7 @@ import { adminFetch } from './adminApi.js'
 import MemberRecord from '../components/MemberRecord.jsx'
 import RecordSkeleton from '../components/RecordSkeleton.jsx'
 import PaymentCoveragePreview from './PaymentCoveragePreview.jsx'
+import EditMemberForm from './EditMemberForm.jsx'
 
 function AdminMemberRecordStub({ memberId, onNavigate }) {
   const [member, setMember] = useState(null)
@@ -12,6 +13,7 @@ function AdminMemberRecordStub({ memberId, onNavigate }) {
   const [openYear, setOpenYear] = useState(2026)
   const [loading, setLoading] = useState(true)
   const [paymentManagementOpen, setPaymentManagementOpen] = useState(false)
+  const [editMemberOpen, setEditMemberOpen] = useState(false)
   const [recordVersion, setRecordVersion] = useState(0)
 
   useEffect(() => {
@@ -68,9 +70,44 @@ function AdminMemberRecordStub({ memberId, onNavigate }) {
       onBack={() => onNavigate('/admin')}
       backLabel="← Back to Members"
       eyebrow="MEMBER RECORD"
-      headerAction={<button className="record-payment-button" type="button" onClick={() => setPaymentManagementOpen((isOpen) => !isOpen)}>{paymentManagementOpen ? 'Hide Payment' : 'Record Payment'}</button>}
+      headerAction={
+        <div className="record-header-actions">
+          <button
+            className="record-edit-button"
+            type="button"
+            onClick={() => {
+              setEditMemberOpen((isOpen) => !isOpen)
+              setPaymentManagementOpen(false)
+            }}
+          >
+            {editMemberOpen ? 'Hide Edit' : 'Edit Member'}
+          </button>
+          <button
+            className="record-payment-button"
+            type="button"
+            onClick={() => {
+              setPaymentManagementOpen((isOpen) => !isOpen)
+              setEditMemberOpen(false)
+            }}
+          >
+            {paymentManagementOpen ? 'Hide Payment' : 'Record Payment'}
+          </button>
+        </div>
+      }
       showAccountDetails={false}
-      beforeHistory={paymentManagementOpen ? <PaymentCoveragePreview memberId={memberId} memberName={member.full_name} memberDues={memberDues} onSaved={() => setRecordVersion((version) => version + 1)} /> : null}
+      beforeHistory={
+        editMemberOpen ? (
+          <EditMemberForm
+            key={`${member.id}-${recordVersion}`}
+            memberId={memberId}
+            memberName={member.full_name}
+            duesStartMonth={duesStartMonth}
+            onSaved={() => setRecordVersion((version) => version + 1)}
+          />
+        ) : paymentManagementOpen ? (
+          <PaymentCoveragePreview memberId={memberId} memberName={member.full_name} memberDues={memberDues} onSaved={() => setRecordVersion((version) => version + 1)} />
+        ) : null
+      }
     />
   )
 }

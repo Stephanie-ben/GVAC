@@ -3,7 +3,7 @@ const cors = require("cors");
 const session = require("express-session");
 const pool = require("./db");
 const { savePayment } = require("./payment_writes");
-const { saveNewMember } = require("./member_writes");
+const { saveNewMember, updateMember } = require("./member_writes");
 const { previewPayment } = require("./payment_preview");
 const {
   calculateOutstandingBalance,
@@ -206,6 +206,22 @@ app.post("/api/admin/members", requireAdmin, async (req, res) => {
   } catch (error) {
     console.error("Add member failed:", error);
     res.status(422).json({ error: error.message || "Member could not be added." });
+  }
+});
+
+app.patch("/api/admin/members/:id", requireAdmin, async (req, res) => {
+  try {
+    const result = await updateMember({
+      pool,
+      memberId: req.params.id,
+      fullName: req.body.full_name,
+      duesStartMonth: req.body.dues_start_month,
+    });
+    res.json(result);
+  } catch (error) {
+    console.error("Update member failed:", error);
+    const status = error.message === "Member not found" ? 404 : 422;
+    res.status(status).json({ error: error.message || "Member could not be updated." });
   }
 });
 

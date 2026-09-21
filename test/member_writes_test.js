@@ -1,5 +1,5 @@
 const assert = require("node:assert/strict");
-const { saveNewMember, monthsInclusive } = require("../server/member_writes");
+const { saveNewMember, updateMember, monthsInclusive } = require("../server/member_writes");
 
 function createPool({ failAfterMember = false, missingPeriods = [] } = {}) {
   const statements = [];
@@ -93,6 +93,91 @@ async function run() {
   assert.equal(futureResult.payment_id, "payment-1");
   assert.ok(future.statements.some((sql) => sql.includes("INSERT INTO dues_periods")));
   assert.ok(future.statements.includes("COMMIT"));
+
+  const updateClient = {
+    statements: [],
+    params: [],
+    async query(sql, params = []) {
+      this.statements.push(sql);
+      this.params.push(params);
+      if (sql === "BEGIN" || sql === "COMMIT" || sql === "ROLLBACK") return { rows: [] };
+      if (sql.includes("FROM members") && sql.includes("FOR UPDATE")) {
+        return { rows: [{ id: "member-1", full_name: "OLD NAME", regular_dues_start_month: "2019-01-01" }] };
+      }
+      if (sql.includes("UPDATE members")) return { rows: [] };
+      if (sql.includes("DELETE FROM dues_allocations")) return { rows: [] };
+      if (sql.includes("DELETE FROM member_dues")) return { rows: [] };
+      throw new Error(`Unexpected query: ${sql}`);
+    },
+    release() { this.statements.push("RELEASE"); },
+  };
+
+  const renamed = await updateMember({
+    pool: { async connect() { return updateClient; } },
+    memberId: "member-1",
+    fullName: "  New   Name  ",
+    duesStartMonth: "2019-01-01",
+  });
+  assert.equal(renamed.id, "member-1");
+  assert.equal(renamed.full_name, "New Name");
+  assert.equal(renamed.regular_dues_start_month, "2019-01-01");
+  const nameUpdate = updateClient.params.find((params) => params[1] === "New Name");
+  assert.deepEqual(nameUpdate, ["member-1", "New Name", "2019-01-01"]);
+  assert.ok(updateClient.statements.includes("COMMIT"));
+
+  const startClient = {
+    statements: [],
+    params: [],
+    async query(sql, params = []) {
+      this.statements.push(sql);
+      this.params.push(params);
+      if (sql === "BEGIN" || sql === "COMMIT" || sql === "ROLLBACK") return { rows: [] };
+      if (sql.includes("FROM members") && sql.includes("FOR UPDATE")) {
+        return { rows: [{ id: "member-2" }] };
+      }
+      if (sql.includes("UPDATE members")) return { rows: [] };
+      if (sql.includes("DELETE FROM dues_allocations")) return { rows: [] };
+      if (sql.includes("DELETE FROM member_dues")) return { rows: [] };
+      throw new Error(`Unexpected query: ${sql}`);
+    },
+    release() { this.statements.push("RELEASE"); },
+  };
+
+  const movedStart = await updateMember({
+    pool: { async connect() { return startClient; } },
+    memberId: "member-2",
+    fullName: "ANYANWU HENRY",
+    duesStartMonth: "2019-06-01",
+  });
+  assert.equal(movedStart.id, "member-2");
+  assert.equal(movedStart.regular_dues_start_month, "2019-06-01");
+  assert.ok(startClient.statements.some((sql) => sql.includes("DELETE FROM dues_allocations")));
+  assert.ok(startClient.statements.some((sql) => sql.includes("DELETE FROM member_dues")));
+  const startDelete = startClient.params.find((params) => params[1] === "2019-06-01" && params.length === 2 && params[0] === "member-2");
+  assert.ok(startDelete);
+  assert.ok(!startClient.statements.some((sql) => sql.includes("DELETE FROM payments")));
+  assert.ok(startClient.statements.includes("COMMIT"));
+
+  const missing = {
+    statements: [],
+    async query(sql) {
+      this.statements.push(sql);
+      if (sql === "BEGIN" || sql === "ROLLBACK") return { rows: [] };
+      if (sql.includes("FROM members")) return { rows: [] };
+      throw new Error(`Unexpected query: ${sql}`);
+    },
+    release() { this.statements.push("RELEASE"); },
+  };
+  await assert.rejects(
+    updateMember({
+      pool: { async connect() { return missing; } },
+      memberId: "missing",
+      fullName: "NOPE",
+      duesStartMonth: "2019-06-01",
+    }),
+    /Member not found/
+  );
+  assert.ok(missing.statements.includes("ROLLBACK"));
 
   console.log("member write transaction tests passed");
 }

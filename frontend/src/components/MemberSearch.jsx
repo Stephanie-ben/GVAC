@@ -49,7 +49,7 @@ function MemberSearch({
 
             {showResults && search.trim() && !isSearching && results.length === 0 && (
               <div className="no-results">
-                No member found. Try another name.
+                No record found. We couldn’t find a financial record matching your search.
               </div>
             )}
           </div>

@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
+import { CircleAlert, CircleCheck } from 'lucide-react'
 import StatusFeedback from './StatusFeedback.jsx'
 import { adminFetch } from './adminApi.js'
 
@@ -13,7 +14,7 @@ function todayIsoDate() {
   return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`
 }
 
-function paidYears() {
+export function paidYears() {
   const years = []
   for (let year = 2018; year <= 2028; year += 1) years.push(year)
   return years
@@ -114,7 +115,7 @@ function coverageMismatchMessage(data, parsedAmount) {
   return 'Selected coverage does not match the oldest outstanding months this payment would clear.'
 }
 
-function CoverageDateFields({ label, period, years, onChange, disabled = false }) {
+export function CoverageDateFields({ label, period, years, onChange, disabled = false }) {
   const { year, month } = splitPeriod(period)
   return (
     <fieldset className="coverage-date-fields" disabled={disabled}>
@@ -271,7 +272,12 @@ function PaymentCoveragePreview({ memberId, memberName, memberDues, onSaved }) {
           </span>
         </label>
         {!coverage && loading && <p className="payment-preview-status">Calculating coverage…</p>}
-        {!coverage && previewError && <p className="payment-preview-error" role="alert">{previewError}</p>}
+        {!coverage && previewError && (
+          <div className="coverage-status coverage-status-error" role="alert">
+            <CircleAlert size={18} strokeWidth={2} aria-hidden="true" />
+            <p>{previewError}</p>
+          </div>
+        )}
       </section>
 
       {coverage && (
@@ -285,14 +291,28 @@ function PaymentCoveragePreview({ memberId, memberName, memberDues, onSaved }) {
               <CoverageDateFields label="Coverage End" period={coverage.end_period} years={years} onChange={() => {}} disabled />
             </div>
             {loading && <p className="payment-preview-status">Calculating coverage…</p>}
-            {previewError && <p className="payment-preview-error" role="alert">{previewError}</p>}
-            {!loading && !previewError && preview?.valid && <p className="payment-preview-status">Coverage matches the entered amount.</p>}
+            {previewError && (
+              <div className="coverage-status coverage-status-error" role="alert">
+                <CircleAlert size={18} strokeWidth={2} aria-hidden="true" />
+                <p>{previewError}</p>
+              </div>
+            )}
+            {!loading && !previewError && preview?.valid && (
+              <div className="coverage-status coverage-status-success" role="status">
+                <CircleCheck size={18} strokeWidth={2} aria-hidden="true" />
+                <p>Coverage matches the entered amount.</p>
+              </div>
+            )}
+            <div className="record-form-actions">
+              <button className="save-payment-button" type="button" disabled={!canSave} onClick={() => setConfirming(true)}>
+                Save payment
+              </button>
+            </div>
           </div>
         </section>
       )}
 
       {saveError && <p className="payment-preview-error" role="alert">{saveError}</p>}
-      <button className="save-payment-button" type="button" disabled={!canSave} onClick={() => setConfirming(true)}>Save payment</button>
 
       {confirming && (
         <div

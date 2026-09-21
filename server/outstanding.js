@@ -158,6 +158,28 @@ function isPayablePeriod(row, duesStartMonth) {
   return Number(row.amount_due_ngn) - Number(row.amount_allocated_ngn) > 0;
 }
 
+function isRepresentedPeriod(row, duesStartMonth) {
+  const period = calendarPeriodStart(row.period_start);
+  if (period.startsWith("2020-")) return false;
+  if (duesStartMonth && period < calendarPeriodStart(duesStartMonth)) return false;
+  return true;
+}
+
+function nextCalendarPeriod(period) {
+  let year = Number(period.slice(0, 4));
+  let month = Number(period.slice(5, 7));
+
+  do {
+    month += 1;
+    if (month > 12) {
+      month = 1;
+      year += 1;
+    }
+  } while (year === 2020);
+
+  return `${year}-${pad2(month)}-01`;
+}
+
 function toPaymentObligations(
   duesRows,
   duesStartMonth = null,
@@ -188,53 +210,47 @@ function toPaymentObligations(
     }
   }
 
-  const existingPeriods = new Set(
-    obligations.map((obligation) =>
-      calendarPeriodStart(obligation.period_start)
-    )
-  );
+  const existingPeriods = new Set();
+  let lastRepresentedPeriod = null;
 
-  let lastPeriod = obligations.length
-    ? calendarPeriodStart(obligations[obligations.length - 1].period_start)
+  for (const row of duesRows) {
+    if (!isRepresentedPeriod(row, duesStartMonth)) continue;
+    const period = calendarPeriodStart(row.period_start);
+    existingPeriods.add(period);
+    if (!lastRepresentedPeriod || period > lastRepresentedPeriod) {
+      lastRepresentedPeriod = period;
+    }
+  }
+
+  for (const obligation of obligations) {
+    existingPeriods.add(calendarPeriodStart(obligation.period_start));
+  }
+
+  let period = lastRepresentedPeriod
+    ? nextCalendarPeriod(lastRepresentedPeriod)
     : duesStartMonth
       ? calendarPeriodStart(duesStartMonth)
       : null;
 
-  if (!lastPeriod) {
+  if (!period) {
     return obligations;
   }
 
-  let year = Number(lastPeriod.slice(0, 4));
-  let month = Number(lastPeriod.slice(5, 7));
-
   while (remaining > 0) {
-    month += 1;
+    if (!existingPeriods.has(period)) {
+      obligations.push({
+        period_start: period,
+        period_status: "active",
+        amount_due_ngn: 500,
+        amount_allocated_ngn: 0,
+        unresolved: false,
+      });
 
-    if (month > 12) {
-      month = 1;
-      year += 1;
+      existingPeriods.add(period);
+      remaining -= 500;
     }
 
-    if (year === 2020) {
-      continue;
-    }
-
-    const period = `${year}-${String(month).padStart(2, "0")}-01`;
-
-    if (existingPeriods.has(period)) {
-      continue;
-    }
-
-    obligations.push({
-      period_start: period,
-      period_status: "active",
-      amount_due_ngn: 500,
-      amount_allocated_ngn: 0,
-      unresolved: false,
-    });
-
-    existingPeriods.add(period);
-    remaining -= 500;
+    period = nextCalendarPeriod(period);
   }
 
   return obligations;

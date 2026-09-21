@@ -6,6 +6,14 @@ import StatusFeedback from './StatusFeedback.jsx'
 
 const METRIC_CARDS = [
   {
+    key: 'outstanding',
+    label: 'Total Outstanding Dues',
+    icon: Banknote,
+    iconClass: 'green',
+    valueKey: 'amount_outstanding_ngn',
+    format: 'naira',
+  },
+  {
     key: 'committed',
     label: 'Financially Committed Members',
     icon: Users,
@@ -28,14 +36,6 @@ const METRIC_CARDS = [
     iconClass: 'red',
     valueKey: 'members_owing',
     format: 'count',
-  },
-  {
-    key: 'outstanding',
-    label: 'Total Outstanding Dues',
-    icon: Banknote,
-    iconClass: 'green',
-    valueKey: 'amount_outstanding_ngn',
-    format: 'naira',
   },
 ]
 
