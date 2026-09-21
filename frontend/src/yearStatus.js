@@ -24,32 +24,65 @@ export function getHistoryYears(memberDues, asOf = new Date()) {
   )
 }
 
-export function getYearStatus(year, memberDues, duesStartMonth) {
+function isBeforeDuesStart(year, monthNumber, duesStartMonth) {
+  if (!duesStartMonth) return false
+  const startDate = new Date(duesStartMonth)
+  const startYear = startDate.getFullYear()
+  const startMonth = startDate.getMonth() + 1
+  return year < startYear || (year === startYear && monthNumber < startMonth)
+}
+
+function isFutureMonth(year, monthNumber, asOf) {
+  const asOfYear = asOf.getFullYear()
+  const asOfMonth = asOf.getMonth() + 1
+  return year > asOfYear || (year === asOfYear && monthNumber > asOfMonth)
+}
+
+function isApplicableMonth(year, monthNumber, duesStartMonth, asOf) {
+  if (year === 2020) return false
+  if (isFutureMonth(year, monthNumber, asOf)) return false
+  if (isBeforeDuesStart(year, monthNumber, duesStartMonth)) return false
+  return true
+}
+
+function findMonthDue(dues, year, monthNumber) {
+  return dues.find((item) => {
+    const date = new Date(item.period_start)
+    return date.getFullYear() === year && date.getMonth() + 1 === monthNumber
+  })
+}
+
+function isMonthSettled(due) {
+  if (!due) return false
+  if (due.source_status === "writeoff_marker") return true
+  return Number(due.amount_allocated_ngn) >= Number(due.amount_due_ngn)
+}
+
+export function getYearStatus(year, memberDues, duesStartMonth, asOf = new Date()) {
   if (year === 2020) {
     return "Excluded"
   }
 
   const yearDues = getYearDues(memberDues, year)
+  let hasApplicable = false
+  let hasOutstanding = false
 
-  if (yearDues.length === 0) {
-    return "No dues recorded"
+  for (let monthNumber = 1; monthNumber <= 12; monthNumber += 1) {
+    if (!isApplicableMonth(year, monthNumber, duesStartMonth, asOf)) continue
+    hasApplicable = true
+    const due = findMonthDue(yearDues, year, monthNumber)
+    if (!isMonthSettled(due)) {
+      hasOutstanding = true
+    }
   }
 
-  const startDate = duesStartMonth
-    ? new Date(duesStartMonth)
-    : null
-
-  const hasOutstanding = yearDues.some((due) => {
-    if (due.source_status === "writeoff_marker") {
-      return false
+  if (!hasApplicable) {
+    if (yearDues.length === 0) {
+      return "No dues recorded"
     }
 
-    if (startDate && new Date(due.period_start) < startDate) {
-      return false
-    }
-
-    return Number(due.amount_allocated_ngn) < Number(due.amount_due_ngn)
-  })
+    return "Paid"
+  }
 
   return hasOutstanding ? "Outstanding" : "Paid"
 }
@@ -75,22 +108,20 @@ export function getMonthDisplayStatus(
   duesStartMonth,
   asOf = new Date()
 ) {
-  const due = dues.find((item) => {
-    const date = new Date(item.period_start)
-    return date.getFullYear() === year && date.getMonth() + 1 === monthNumber
-  })
+  const due = findMonthDue(dues, year, monthNumber)
 
   if (due?.source_status === "writeoff_marker") {
     return "writeoff"
   }
 
-  const startDate = duesStartMonth ? new Date(duesStartMonth) : null
-  if (
-    startDate &&
-    year === startDate.getFullYear() &&
-    monthNumber < startDate.getMonth() + 1
-  ) {
-    return "not-member"
+  if (duesStartMonth) {
+    const startDate = new Date(duesStartMonth)
+    if (
+      year === startDate.getFullYear() &&
+      monthNumber < startDate.getMonth() + 1
+    ) {
+      return "not-member"
+    }
   }
 
   if (due) {
@@ -102,13 +133,12 @@ export function getMonthDisplayStatus(
     }
   }
 
-  const asOfYear = asOf.getFullYear()
-  const asOfMonth = asOf.getMonth() + 1
-  const isFutureMonth =
-    year > asOfYear || (year === asOfYear && monthNumber > asOfMonth)
-
-  if (isFutureMonth) {
+  if (isFutureMonth(year, monthNumber, asOf)) {
     return "upcoming"
+  }
+
+  if (isApplicableMonth(year, monthNumber, duesStartMonth, asOf) && !isMonthSettled(due)) {
+    return "overdue"
   }
 
   if (due) {

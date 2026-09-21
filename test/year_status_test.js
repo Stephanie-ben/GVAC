@@ -30,6 +30,11 @@ async function run() {
     due("2019-01-15T12:00:00.000Z", "writeoff_marker", 300, 0),
     due("2019-05-15T12:00:00.000Z", "writeoff_marker", 300, 0),
     due("2019-06-15T12:00:00.000Z", "paid", 500, 500),
+    due("2019-07-15T12:00:00.000Z", "paid", 500, 500),
+    due("2019-08-15T12:00:00.000Z", "paid", 500, 500),
+    due("2019-09-15T12:00:00.000Z", "paid", 500, 500),
+    due("2019-10-15T12:00:00.000Z", "paid", 500, 500),
+    due("2019-11-15T12:00:00.000Z", "paid", 500, 500),
     due("2019-12-15T12:00:00.000Z", "paid", 500, 500),
   ];
 
@@ -90,6 +95,35 @@ async function run() {
     [2028, 2027, 2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019]
   );
   assert.deepEqual(getHistoryYears([], asOf2026), [2026]);
+
+  const firstPaymentJanApr2025 = [
+    due("2025-01-15T12:00:00.000Z", "outstanding", 500, 500),
+    due("2025-02-15T12:00:00.000Z", "outstanding", 500, 500),
+    due("2025-03-15T12:00:00.000Z", "outstanding", 500, 500),
+    due("2025-04-15T12:00:00.000Z", "outstanding", 500, 500),
+  ];
+  const startJan2025 = "2025-01-01";
+  assert.equal(getYearStatus(2025, firstPaymentJanApr2025, startJan2025, asOfSep2026), "Outstanding");
+  assert.equal(getYearStatus(2026, firstPaymentJanApr2025, startJan2025, asOfSep2026), "Outstanding");
+  assert.equal(getMonthDisplayStatus(2025, 1, firstPaymentJanApr2025, startJan2025, asOfSep2026), "paid");
+  assert.equal(getMonthDisplayStatus(2025, 4, firstPaymentJanApr2025, startJan2025, asOfSep2026), "paid");
+  for (const month of [5, 6, 7, 8, 9, 10, 11, 12]) {
+    assert.equal(
+      getMonthDisplayStatus(2025, month, firstPaymentJanApr2025, startJan2025, asOfSep2026),
+      "overdue",
+      `2025-${month} should be overdue`
+    );
+  }
+  for (const month of [1, 2, 3, 4, 5, 6, 7, 8, 9]) {
+    assert.equal(
+      getMonthDisplayStatus(2026, month, firstPaymentJanApr2025, startJan2025, asOfSep2026),
+      "overdue",
+      `2026-${month} should be overdue`
+    );
+  }
+  assert.equal(getMonthDisplayStatus(2026, 10, firstPaymentJanApr2025, startJan2025, asOfSep2026), "upcoming");
+  assert.equal(getMonthDisplayStatus(2026, 11, firstPaymentJanApr2025, startJan2025, asOfSep2026), "upcoming");
+  assert.equal(getMonthDisplayStatus(2026, 12, firstPaymentJanApr2025, startJan2025, asOfSep2026), "upcoming");
 
   console.log("year and month dues-history status tests passed");
 }
