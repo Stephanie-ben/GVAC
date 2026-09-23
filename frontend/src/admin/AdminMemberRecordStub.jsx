@@ -10,6 +10,7 @@ function AdminMemberRecordStub({ memberId, onNavigate }) {
   const [memberDues, setMemberDues] = useState([])
   const [duesStartMonth, setDuesStartMonth] = useState(null)
   const [outstandingBalance, setOutstandingBalance] = useState(0)
+  const [paymentAccounts, setPaymentAccounts] = useState([])
   const [openYear, setOpenYear] = useState(2026)
   const [loading, setLoading] = useState(true)
   const [paymentManagementOpen, setPaymentManagementOpen] = useState(false)
@@ -69,13 +70,18 @@ function AdminMemberRecordStub({ memberId, onNavigate }) {
         if (!response.ok) throw new Error('Member dues not found')
         return response.json()
       }),
+      adminFetch(`/api/payment-accounts`).then((response) => {
+        if (!response.ok) throw new Error('Payment accounts not found')
+        return response.json()
+      }),
     ])
-      .then(([memberData, duesData]) => {
+      .then(([memberData, duesData, paymentAccountsData]) => {
         if (!cancelled) {
           setMember(memberData)
           setMemberDues(duesData.dues)
           setDuesStartMonth(duesData.regular_dues_start_month)
           setOutstandingBalance(duesData.outstanding_balance_ngn)
+          setPaymentAccounts(paymentAccountsData)
         }
       })
       .catch((error) => {
@@ -103,7 +109,7 @@ function AdminMemberRecordStub({ memberId, onNavigate }) {
     <MemberRecord
       selectedMember={member}
       outstandingBalance={outstandingBalance}
-      paymentAccounts={[]}
+      paymentAccounts={paymentAccounts}
       memberDues={memberDues}
       duesStartMonth={duesStartMonth}
       openYear={openYear}
