@@ -252,12 +252,12 @@ button {
   font-size: 16px;
   line-height: 1.4;
 }
- 
+
 .exclusion-note {
   color: #C58A18;
   font-size: 12px;
   line-height: 1.5;
-  
+
 }
 
 .exclusion-note span:first-child {
@@ -550,7 +550,7 @@ button {
   font-weight: 400;
   letter-spacing: 1px
 }
- 
+
  .dues-notice {
     display: flex;
     align-items: center;
@@ -892,7 +892,7 @@ button {
 .save-payment-button {
   margin-top: 0;
   padding: 10px 15px;
-  border: 1px solid #0275d8;
+  border: 0;
   border-radius: 8px;
   background: #0275d8;
   color: #ffffff;
@@ -1262,19 +1262,15 @@ button {
   }
 
   .status-feedback {
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: grid;
-    place-items: start center;
-    padding-top: calc(env(safe-area-inset-top, 0px) + 96px);
-    padding-right: 24px;
-    padding-bottom: 20px;
-    padding-left: 24px;
-    background: rgba(23, 32, 51, 0.42);
+    top: calc(env(safe-area-inset-top, 0px) + 24px);
+    right: 24px;
+    left: 24px;
+    bottom: auto;
+    width: auto;
+    height: auto;
+    padding: 0;
+    background: transparent;
+    pointer-events: none;
   }
 
   .status-feedback-card {
@@ -1829,7 +1825,7 @@ button {
     opacity: 0.5;
   }
 }
-   
+
 .financially-committed-card {
   padding: 30px 18px;
 }
@@ -2535,6 +2531,77 @@ button {
 .admin-member-name-part:not(:last-child)::after {
   content: ' ';
 }
+.admin-member-actions {
+  position: relative;
+}
+
+.admin-member-menu-button {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #172033;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.admin-member-menu-button,
+.admin-profile-trigger {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) and (pointer: fine) {
+.admin-member-menu-button:hover {
+  background: #F3F4F6;
+ }
+}
+
+.admin-member-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  min-width: 160px;
+  width: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 4px;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(23, 32, 51, 0.12);
+}
+
+.admin-member-menu button {
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #172033;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-member-menu button:hover {
+  background: #F3F4F6;
+}
+.payment-confirmation-modal .archive-confirm-question {
+  margin-top: 12px !important;
+}
+
+.archive-confirm-button {
+  background: #DC2626 !important;
+}
+
+.admin-member-menu-danger {
+  color: #DC2626 !important;
+}
 
 .admin-table-details {
   margin-top: 0;
@@ -2561,6 +2628,7 @@ button {
   width: 100%;
   min-height: 64px;
   padding: 14px 16px;
+  box-sizing: border-box;
   border: 0;
   border-bottom: 1px solid #E5E7EB;
   background: #ffffff;
@@ -2569,6 +2637,10 @@ button {
   align-items: center;
   column-gap: 10px;
   text-align: left;
+}
+
+.admin-member-row .admin-member-actions {
+  position: relative;
 }
 
 .admin-member-row:first-child {
@@ -2633,7 +2705,25 @@ button {
 }
 
 @media (max-width: 520px) {
-  .record-header-row:has(.record-header-actions) {
+
+    .admin-filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.admin-member-row .admin-member-menu {
+  right: calc(100% + 4px);;
+  left: auto;
+  min-width: 160px;
+}
+
+  .admin-filter {
+    flex: 0 0 auto;
+  }
+.record-header-row:has(.record-header-actions) {
     flex-wrap: wrap;
   }
 
@@ -2713,13 +2803,15 @@ button {
     content: none;
   }
 
-  .admin-members-table-wrap {
-    display: block;
-    overflow-x: auto;
-    max-width: 100%;
-    -webkit-overflow-scrolling: touch;
-  }
+.admin-members-table-wrap {
+  display: block;
+  overflow: visible;
+  max-width: 100%;
+}
 
+.admin-members-list {
+  display: none;
+}
   .admin-members-table {
     width: 100%;
     table-layout: fixed;
@@ -2762,6 +2854,13 @@ button {
     top: 0;
     z-index: 1;
   }
+.admin-members-table thead th:first-child {
+  border-top-left-radius: 12px;
+}
+
+.admin-members-table thead th:last-child {
+  border-top-right-radius: 12px;
+}
 
   .admin-members-list {
     display: none;
@@ -2792,4 +2891,77 @@ button {
   .admin-members-list {
     display: none;
   }
+}
+.archive-member-section {
+  margin-top: 32px;
+  width: 100%;
+}
+
+.archive-member-button {
+  width: 100%;
+  padding: 10px 15px;
+  border: 1px solid #DC2626;
+  border-radius: 8px;
+  background: transparent;
+  color: #DC2626;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.archive-member-button:active,
+.archive-member-button:focus {
+  background: transparent;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .archive-member-button:hover {
+    border-color: #B91C1C;
+    color: #B91C1C;
+    background: transparent;
+    box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.08);
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .payment-confirmation-modal button {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .payment-confirmation-modal button:active,
+  .payment-confirmation-modal button:focus {
+    outline: none;
+    box-shadow: none;
+  }
+}
+
+.archive-confirm-button:disabled {
+  color: #ffffff;
+}
+
+.restore-member-button {
+  border-color: #0275D8;
+  color: #0275D8;
+  background: transparent;
+}
+
+.restore-member-button:disabled {
+  border-color: #bfc8d4;
+  background: transparent;
+  color: #6b7280;
+}
+
+.restore-member-button:disabled {
+  border-color: #0275D8;
+  background: transparent;
+  color: #0275D8;
+  cursor: not-allowed;
+}
+
+.save-payment-button.restore-confirm-button:disabled {
+  border-color: #0275D8;
+  background: #0275D8;
+  color: #ffffff;
+  cursor: not-allowed;
 }

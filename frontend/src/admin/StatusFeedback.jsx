@@ -3,17 +3,15 @@ import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 
 function StatusFeedback({ type, message, onClose }) {
-  const isSuccess = type === 'success'
   const onCloseRef = useRef(onClose)
+
   onCloseRef.current = onClose
 
   useEffect(() => {
-    if (!isSuccess || typeof window === 'undefined') return
-    if (window.matchMedia('(max-width: 520px)').matches) return
+    const timer = window.setTimeout(() => onCloseRef.current(), 6000)
 
-    const timer = window.setTimeout(() => onCloseRef.current(), 4500)
     return () => window.clearTimeout(timer)
-  }, [isSuccess, message])
+  }, [message])
 
   const handleClose = (event) => {
     event.preventDefault()
@@ -22,9 +20,9 @@ function StatusFeedback({ type, message, onClose }) {
   }
 
   return createPortal(
-    <div className={`status-feedback ${type}`} role={isSuccess ? 'status' : 'alert'}>
-<div className="status-feedback-card">
-  <div className="status-feedback-message">{message}</div> 
+    <div className={`status-feedback ${type}`} role={type === 'success' ? 'status' : 'alert'}>
+      <div className="status-feedback-card">
+        <div className="status-feedback-message">{message}</div>
         <button
           type="button"
           className="status-feedback-close"

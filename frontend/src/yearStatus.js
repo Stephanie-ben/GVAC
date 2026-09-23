@@ -67,8 +67,14 @@ export function getYearStatus(year, memberDues, duesStartMonth, asOf = new Date(
   let hasApplicable = false
   let hasOutstanding = false
 
-  for (let monthNumber = 1; monthNumber <= 12; monthNumber += 1) {
-    if (!isApplicableMonth(year, monthNumber, duesStartMonth, asOf)) continue
+const isFutureYear = year > asOf.getFullYear()
+
+for (let monthNumber = 1; monthNumber <= 12; monthNumber += 1) {
+  if (
+    isFutureYear
+      ? isBeforeDuesStart(year, monthNumber, duesStartMonth)
+      : !isApplicableMonth(year, monthNumber, duesStartMonth, asOf)
+  ) continue
     hasApplicable = true
     const due = findMonthDue(yearDues, year, monthNumber)
     if (!isMonthSettled(due)) {

@@ -5,7 +5,7 @@
 create extension if not exists pgcrypto;
 
 create type gvac_period_status as enum ('active', 'excluded');
-create type gvac_member_status as enum ('active', 'inactive');
+create type gvac_member_status as enum ('active', 'inactive', 'archived');
 create type gvac_allocation_kind as enum ('live_payment', 'historical_pdf');
 create type gvac_gap_resolution as enum ('unresolved', 'paid', 'outstanding', 'forgiven', 'not_member');
 

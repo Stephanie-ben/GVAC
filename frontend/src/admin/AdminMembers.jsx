@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import MemberSearch from '../components/MemberSearch.jsx'
+import StatusFeedback from './StatusFeedback.jsx'
 import { adminFetch } from './adminApi.js'
+import { MoreVertical } from 'lucide-react'
 
 const PAGE_SIZE = 20
 
@@ -8,6 +10,7 @@ const FILTERS = [
   { id: 'all', label: 'All' },
   { id: 'up_to_date', label: 'Financially Up-to-date' },
   { id: 'owing', label: 'Owing' },
+  { id: 'archived', label: 'Archived' },
 ]
 
 function statusFromPath(path) {
@@ -55,6 +58,35 @@ function AdminMembers({ path, onNavigate }) {
   const [directory, setDirectory] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
+  const [openMenuId, setOpenMenuId] = useState(null)
+  const [pendingStatusChange, setPendingStatusChange] = useState(null)
+  const [statusChangeSaving, setStatusChangeSaving] = useState(false)
+
+useEffect(() => {
+  const handleDocumentPointerDown = (event) => {
+    if (!(event.target instanceof Element)) return
+
+    if (!event.target.closest('.admin-member-actions')) {
+      setOpenMenuId(null)
+    }
+  }
+
+  document.addEventListener('pointerdown', handleDocumentPointerDown)
+
+  return () => {
+    document.removeEventListener('pointerdown', handleDocumentPointerDown)
+  }
+}, [])
+
+  useEffect(() => {
+    const message = sessionStorage.getItem('adminMemberFeedback')
+
+    if (message) {
+      setSuccessMessage(message)
+      sessionStorage.removeItem('adminMemberFeedback')
+    }
+  }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -117,6 +149,57 @@ function AdminMembers({ path, onNavigate }) {
   const openMember = (memberId) => {
     onNavigate(`/admin/members/${memberId}`)
   }
+  const requestStatusChange = (member) => {
+  setOpenMenuId(null)
+  setPendingStatusChange({
+    member,
+    status: member.membership_status === 'archived' ? 'active' : 'archived',
+  })
+}
+
+const confirmStatusChange = async () => {
+  if (!pendingStatusChange || statusChangeSaving) return
+
+  const isArchiving = pendingStatusChange.status === 'archived'
+  const memberName = pendingStatusChange.member.full_name
+
+  setStatusChangeSaving(true)
+  setError(false)
+
+  try {
+    const response = await adminFetch(
+      `/api/admin/members/${pendingStatusChange.member.id}/status`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: pendingStatusChange.status,
+        }),
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error('Member status could not be updated')
+    }
+
+    const feedbackMessage = isArchiving
+      ? `${memberName} has been moved to Archive successfully.`
+      : `${memberName} has been restored successfully.`
+
+    setSuccessMessage(feedbackMessage)
+    sessionStorage.setItem('adminMemberFeedback', feedbackMessage)
+    setPendingStatusChange(null)
+
+    onNavigate(isArchiving ? '/admin?status=archived' : '/admin')
+  } catch (error) {
+    console.error('Update member status failed:', error)
+    setError(true)
+  } finally {
+    setStatusChangeSaving(false)
+  }
+}
 
   return (
     <section className="admin-members-section">
@@ -134,14 +217,16 @@ function AdminMembers({ path, onNavigate }) {
       <div className="admin-filters" role="tablist" aria-label="Member filters">
         {FILTERS.map((filter) => (
           <button
-            className={`admin-filter${status === filter.id ? ' active' : ''}`}
-            type="button"
             key={filter.id}
-            onClick={() => onNavigate(
-              filter.id === 'all'
-                ? '/admin'
-                : `/admin?status=${filter.id}`
-            )}
+            type="button"
+            className={`admin-filter${status === filter.id ? ' active' : ''}`}
+            onClick={() =>
+              onNavigate(
+                filter.id === 'all'
+                  ? '/admin'
+                  : `/admin?status=${filter.id}`
+              )
+            }
           >
             {filter.label}
           </button>
@@ -150,6 +235,14 @@ function AdminMembers({ path, onNavigate }) {
 
       {error && (
         <p className="admin-stub-copy">Unable to load members.</p>
+      )}
+
+      {successMessage && (
+        <StatusFeedback
+          type="success"
+          message={successMessage}
+          onClose={() => setSuccessMessage('')}
+        />
       )}
 
       {loading && (
@@ -166,10 +259,13 @@ function AdminMembers({ path, onNavigate }) {
         </div>
       )}
 
-      {showDirectoryEmpty && (
-        <p className="admin-stub-copy">No members to display.</p>
-      )}
-
+{showDirectoryEmpty && (
+  <p className="admin-stub-copy">
+    {status === 'archived'
+      ? 'Archived members will appear here.'
+      : 'No members to display.'}
+  </p>
+)}
       {!loading && !error && members.length > 0 && (
         <>
           <div className="admin-members-table-wrap">
@@ -192,15 +288,40 @@ function AdminMembers({ path, onNavigate }) {
                       </span>
                     </td>
                     <td>{formatOutstanding(member.outstanding_balance_ngn)}</td>
-                    <td>
-                      <button
-                        className="admin-view-details admin-table-details"
-                        type="button"
-                        onClick={() => openMember(member.id)}
-                      >
-                        View<span className="admin-table-details-rest"> Details</span>
-                      </button>
-                    </td>
+<td className="admin-member-actions">
+  <button
+    className="admin-member-menu-button"
+    type="button"
+    aria-label={`Actions for ${member.full_name}`}
+    aria-expanded={openMenuId === member.id}
+    onClick={() =>
+      setOpenMenuId(openMenuId === member.id ? null : member.id)
+    }
+  >
+    <MoreVertical size={20} />
+  </button>
+
+  {openMenuId === member.id && (
+    <div className="admin-member-menu">
+      <button
+        type="button"
+        onClick={() => openMember(member.id)}
+      >
+        View member
+      </button>
+
+<button
+  className={member.membership_status === 'archived' ? '' : 'admin-member-menu-danger'}
+  type="button"
+  onClick={() => requestStatusChange(member)}
+>
+        {member.membership_status === 'archived'
+          ? 'Restore member'
+          : 'Archive member'}
+      </button>
+    </div>
+  )}
+</td>
                   </tr>
                 ))}
               </tbody>
@@ -209,11 +330,9 @@ function AdminMembers({ path, onNavigate }) {
 
           <div className="admin-members-list">
             {members.map((member) => (
-              <button
+              <div
                 className="admin-member-row"
-                type="button"
                 key={member.id}
-                onClick={() => openMember(member.id)}
               >
                 <span className="admin-member-row-name">{member.full_name}</span>
                 <span className={`admin-member-status ${member.financial_status}`}>
@@ -222,10 +341,45 @@ function AdminMembers({ path, onNavigate }) {
                 <span className="admin-member-row-amount">
                   {formatOutstanding(member.outstanding_balance_ngn)}
                 </span>
-                <span className="year-arrow" aria-hidden="true">
-                  <span className="chevron"></span>
-                </span>
-              </button>
+<div className="admin-member-actions">
+  <button
+    className="admin-member-menu-button"
+    type="button"
+    aria-label={`Actions for ${member.full_name}`}
+    aria-expanded={openMenuId === member.id}
+    onClick={() =>
+      setOpenMenuId(openMenuId === member.id ? null : member.id)
+    }
+  >
+    <MoreVertical size={20} />
+  </button>
+
+  {openMenuId === member.id && (
+    <div className="admin-member-menu">
+      <button
+        type="button"
+        onClick={() => openMember(member.id)}
+      >
+        View member
+      </button>
+
+      <button
+        className={
+          member.membership_status === 'archived'
+            ? ''
+            : 'admin-member-menu-danger'
+        }
+        type="button"
+        onClick={() => requestStatusChange(member)}
+      >
+        {member.membership_status === 'archived'
+          ? 'Restore member'
+          : 'Archive member'}
+      </button>
+    </div>
+  )}
+</div>
+              </div>
             ))}
           </div>
 
@@ -260,6 +414,67 @@ function AdminMembers({ path, onNavigate }) {
             </nav>
           )}
         </>
+      )}
+
+      {pendingStatusChange && (
+        <div
+          className="payment-confirmation-backdrop"
+          role="presentation"
+          onClick={() => setPendingStatusChange(null)}
+        >
+          <section
+            className="payment-confirmation-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-member-status-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3 id="confirm-member-status-title">
+              {pendingStatusChange.status === 'archived'
+                ? 'Archive member'
+                : 'Restore member'}
+            </h3>
+
+            <p>
+              {pendingStatusChange.status === 'archived'
+                ? 'When you archive a member, they will be removed from the active member list, but their payment history will be preserved.'
+                : 'This member will be returned to the active member list.'}
+            </p>
+
+              <p className="archive-confirm-question">
+              Are you sure you want to{' '}
+              {pendingStatusChange.status === 'archived' ? 'archive' : 'restore'}{' '}
+              <strong>{pendingStatusChange.member.full_name}</strong>?
+            </p>
+
+            <div className="payment-confirmation-actions">
+              <button
+                type="button"
+                className="cancel-button"
+                onClick={() => setPendingStatusChange(null)}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className={`save-payment-button${
+                  pendingStatusChange.status === 'archived'
+                    ? ' archive-confirm-button'
+                    : ' restore-confirm-button'
+                }`}
+                onClick={confirmStatusChange}
+                disabled={statusChangeSaving}
+              >
+                {statusChangeSaving
+                  ? 'Processing…'
+                  : pendingStatusChange.status === 'archived'
+                    ? 'Archive Member'
+                    : 'Restore Member'}
+              </button>
+            </div>
+          </section>
+        </div>
       )}
     </section>
   )

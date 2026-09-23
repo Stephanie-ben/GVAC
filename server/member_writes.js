@@ -190,5 +190,27 @@ async function updateMember({ pool, memberId, fullName, duesStartMonth }) {
     client.release();
   }
 }
+async function setMemberStatus({ pool, memberId, status }) {
+  if (!["active", "archived"].includes(status)) {
+    throw new Error("Invalid member status");
+  }
 
-module.exports = { saveNewMember, updateMember, monthsInclusive };
+  const result = await pool.query(
+    `
+      UPDATE members
+      SET membership_status = $2,
+          updated_at = now()
+      WHERE id = $1
+      RETURNING id, full_name, membership_status
+    `,
+    [memberId, status]
+  );
+
+  if (result.rows.length === 0) {
+    throw new Error("Member not found");
+  }
+
+  return result.rows[0];
+}
+
+module.exports = { saveNewMember, updateMember, monthsInclusive, setMemberStatus };

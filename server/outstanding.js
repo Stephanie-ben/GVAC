@@ -328,11 +328,25 @@ async function getMembersDirectory(pool, {
 } = {}) {
   let members = await listMembersWithOutstanding(pool, { search, asOf });
 
+if (status === "archived") {
+  members = members.filter(
+    (member) => member.membership_status === "archived"
+  );
+} else {
+  members = members.filter(
+    (member) => member.membership_status !== "archived"
+  );
+
   if (status === "owing") {
-    members = members.filter((member) => member.outstanding_balance_ngn > 0);
+    members = members.filter(
+      (member) => member.outstanding_balance_ngn > 0
+    );
   } else if (status === "up_to_date") {
-    members = members.filter((member) => member.outstanding_balance_ngn === 0);
+    members = members.filter(
+      (member) => member.outstanding_balance_ngn === 0
+    );
   }
+}
 
   const size = Math.min(50, Math.max(1, Number(pageSize) || 20));
   const requestedPage = Math.max(1, Number(page) || 1);
